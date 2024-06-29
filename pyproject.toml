@@ -1,0 +1,154 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools >= 61.0"]
+
+[project]
+name = "MyHumbleSelf"
+version = "0.1.0"
+description = "Show your webcam image on the desktop for presentations."
+keywords = ["webcam", "tool", "presentation"]
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{ name = "dynobo", email = "dynobo@mailbox.org" }]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Topic :: Utilities",
+  "Intended Audience :: End Users/Desktop",
+  "Operating System :: POSIX :: Linux",
+]
+dependencies = ["PyGObject>=3.42.2", "opencv-python"]
+optional-dependencies = { dev = [
+  "build",
+  "mypy",
+  "opencv-stubs",
+  "pre-commit",
+  "pytest",
+  "ruff",
+] }
+
+[project.urls]
+Source = "https://github.com/dynobo/my-humble-self"
+
+[project.scripts]
+mhs = "my_humble_self.app:main"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+exclude = [".venv"]
+
+[tool.ruff.lint]
+select = [
+  "F",    # Pyflakes
+  "E",    # pycodestyle
+  "I",    # Isort
+  "D",    # pydocstyle
+  "W",    # warning
+  "UP",   # pyupgrad
+  "N",    # pep8-naming
+  "C90",  # mccabe
+  "TRY",  # tryceratops (exception handling)
+  "ANN",  # flake8-annotations
+  "S",    # flake8-bandits
+  "C4",   # flake8-comprehensions
+  "B",    # flake8-bugbear
+  "A",    # flake8-builtins
+  "ISC",  # flake8-implicit-str-concat
+  "ICN",  # flake8-import-conventions
+  "T20",  # flake8-print
+  "PYI",  # flake8-pyi
+  "PT",   # flake8-pytest-style
+  "Q",    # flake8-quotes
+  "RET",  # flake8-return
+  "SIM",  # flake8-simplify
+  "PTH",  # flake8-use-pathlib
+  "G",    # flake8-logging-format
+  "PL",   # pylint
+  "RUF",  # meta rules (unused noqa)
+  "PL",   # meta rules (unused noqa)
+  "PERF", # perflint
+]
+ignore = [
+  "D100",   # Missing docstring in public module
+  "D101",   # Missing docstring in public class
+  "D102",   # Missing docstring in public method
+  "D103",   # Missing docstring in public function
+  "D104",   # Missing docstring in public package
+  "D105",   # Missing docstring in magic method
+  "D107",   # Missing docstring in __init__
+  "ANN101", # Missing type annotation for `self` in method
+  "TRY003", # Avoid specifying long messages outside the exception class
+  "ISC001", # Rule conflicts with ruff's formaatter
+  "RET504", # Unnecessary assignment before return statement
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["PLR2004", "PLR0913", "S101", "TID252", "ANN", "D"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["myhumbleself"]
+
+[tool.mypy]
+files = ["myhumbleself/**/*.py", "tests/**/*.py"]
+follow_imports = "skip"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+  "--durations=5",
+  "--showlocals",
+  "--cov",
+  "--cov-report=xml",
+  "--cov-report=html",
+]
+
+[tool.coverage.run]
+source_pkgs = ["myhumbleself"]
+branch = true
+parallel = true
+omit = []
+
+[tool.mdformat]
+wrap = 88
+number = true
+end_of_line = "keep"
+
+[tool.tbump]
+
+[tool.tbump.version]
+current = "0.5.0"
+regex = '''
+  (?P<major>\d+)
+  \.
+  (?P<minor>\d+)
+  \.
+  (?P<patch>\d+)
+  ((?P<extra>.+))?
+  '''
+
+[tool.tbump.git]
+message_template = "Bump to {new_version}"
+tag_template = "v{new_version}"
+
+[[tool.tbump.file]]
+src = "pyproject.toml"
+search = 'version = "{current_version}"'
+
+[[tool.tbump.file]]
+src = "myhumbleself/__init__.py"
+
+[[tool.tbump.before_commit]]
+name = "check changelog"
+cmd = "grep -q {new_version} CHANGELOG.md"

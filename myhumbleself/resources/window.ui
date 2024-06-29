@@ -1,0 +1,130 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Created with Cambalache 0.90.4 -->
+<interface>
+  <!-- interface-name test.ui -->
+  <requires lib="gtk" version="4.12"/>
+  <template class="main_window" parent="GtkApplicationWindow">
+    <property name="title">MyHumbleSelf</property>
+    <property name="titlebar">
+      <object class="GtkHeaderBar">
+        <property name="hexpand">True</property>
+        <child type="start">
+          <object class="GtkToggleButton">
+            <property name="icon-name">zoom-fit-best</property>
+          </object>
+        </child>
+        <child type="end">
+          <object class="GtkMenuButton">
+            <property name="icon-name">emblem-system-symbolic</property>
+            <property name="popover">
+              <object class="GtkPopover">
+                <property name="width-request">200</property>
+                <child>
+                  <object class="GtkBox">
+                    <property name="hexpand">True</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label">Zoom</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkScale">
+                        <property name="adjustment">
+                          <object class="GtkAdjustment">
+                            <property name="lower">1.0</property>
+                            <property name="upper">2.0</property>
+                            <property name="value">1.0</property>
+                          </object>
+                        </property>
+                        <property name="fill-level">0.0</property>
+                        <property name="has-origin">False</property>
+                        <property name="value-pos">bottom</property>
+                        <marks>
+                          <mark position="bottom" value="1.0">1</mark>
+                          <mark position="bottom" value="2.0">2</mark>
+                        </marks>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label">Position</property>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkGrid">
+                        <property name="halign">center</property>
+                        <child>
+                          <object class="GtkButton">
+                            <property name="icon-name">go-previous</property>
+                            <layout>
+                              <property name="column">0</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkButton">
+                            <property name="icon-name">go-next</property>
+                            <layout>
+                              <property name="column">2</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkButton">
+                            <property name="halign">start</property>
+                            <property name="icon-name">go-down</property>
+                            <layout>
+                              <property name="column">1</property>
+                              <property name="row">2</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkButton">
+                            <property name="halign">start</property>
+                            <property name="icon-name">go-up</property>
+                            <layout>
+                              <property name="column">1</property>
+                              <property name="row">0</property>
+                            </layout>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkButton">
+                            <property name="halign">start</property>
+                            <property name="icon-name">zoom-original-symbolic</property>
+                            <layout>
+                              <property name="column">1</property>
+                              <property name="row">1</property>
+                            </layout>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkSeparator"/>
+                    </child>
+                    <child>
+                      <object class="GtkButton">
+                        <property name="label">Help</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </property>
+          </object>
+        </child>
+      </object>
+    </property>
+    <child>
+      <object class="GtkPicture" id="picture"/>
+    </child>
+    <style>
+      <class name="main-window"/>
+    </style>
+  </template>
+</interface>
