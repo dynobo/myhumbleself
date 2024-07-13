@@ -27,8 +27,9 @@ class FaceDetection:
         self.detector_cnn = cv2.FaceDetectorYN.create(self.cnn_onnx, "", (42, 42))
         self.detector_haarcascade = cv2.CascadeClassifier(self.haarcascade_xml)
 
+    @staticmethod
     def _draw_bounding_box(
-        self, image: np.ndarray, face_coords: Rect, color: tuple[int, int, int]
+        image: np.ndarray, face_coords: Rect, color: tuple[int, int, int]
     ) -> None:
         cv2.rectangle(
             img=image,
@@ -83,7 +84,6 @@ class FaceDetection:
             return self._detect_faces_cnn(image)
         if method == "haarcascade":
             return self._detect_faces_haarcascade(image)
-
         raise ValueError(f"Unknown face detection method: {method}")
 
     @staticmethod

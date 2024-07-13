@@ -13,27 +13,54 @@ def convert_colorspace(frame: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
 
 
-def crop_circle(
-    frame: np.ndarray, coords: Rect, padding_factor: float = 0.5
+def crop_to_shape(
+    image: np.ndarray,
+    shape: np.ndarray,
+    face: Rect,
+    zoom_factor: float = 1,
+    offset_xy: tuple[int, int] = (0, 0),
 ) -> np.ndarray:
-    mask = np.zeros(frame.shape, dtype=np.uint8)
-    height, width, _ = frame.shape
+    shape_height, shape_width, _ = shape.shape
+    image_height, image_width, _ = image.shape
 
-    padding = int(max(coords.width, coords.height) * padding_factor)
-    radius = min(coords.width // 2, coords.height // 2) + padding
-    if radius > min(width, height) // 2:
-        radius = min(width, height) // 2
+    # Add padding around face rect (for zoom effect)
+    base_pad = max(face.width, face.height) / 3
+    padding = int(-base_pad + base_pad / zoom_factor / 0.5)
+    face = Rect(
+        top=max(0, face.top - padding + offset_xy[1]),
+        left=max(0, face.left - padding + offset_xy[0]),
+        width=min(image_width, face.width + padding * 2),
+        height=min(image_height, face.height + padding * 2),
+    )
 
-    # Limit to image bounds
-    center_x = max(radius, min(width - radius, coords.center_xy[0]))
-    center_y = max(radius, min(height - radius, coords.center_xy[1]))
+    # Calculate scale for shape to contain face
+    scale_y = face.height / shape_height
+    scale_x = face.width / shape_width
+    scale = max(scale_y, scale_x)
 
-    cv2.circle(mask, (center_x, center_y), radius, (255, 255, 255), -1)
+    # Sanitize scale to stay within image bounds
+    if shape_height * scale > image_height:
+        scale = image_height / shape_height
+    if shape_width * scale > image_width:
+        scale = image_width / shape_width
 
+    # Scale shape
+    mask = cv2.resize(shape, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
+    mask_height, mask_width, _ = mask.shape
+
+    # Calculate mask position
+    mask_x = face.left - (mask_width - face.width) // 2
+    mask_y = face.top - (mask_height - face.height) // 2
+
+    # Sanitize mask position to stay within image bounds
+    mask_x = max(0, min(mask_x, image_width - mask_width))
+    mask_y = max(0, min(mask_y, image_height - mask_height))
+
+    # Crop image to  bounds
+    cropped_image = image[mask_y : mask_y + mask_height, mask_x : mask_x + mask_width]
+
+    # Apply alpha channel from mask onto image
+    # TODO: Check why semi-transparent pixels do not work
     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-    x, y, w, h = cv2.boundingRect(mask)
-    result = frame[y : y + h, x : x + w]
-    mask = mask[y : y + h, x : x + w]
-    result[mask == 0] = (255, 255, 255, 0)
-
-    return result
+    cropped_image[:, :, 3] = mask
+    return cropped_image

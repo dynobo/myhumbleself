@@ -1,0 +1,15 @@
+.move-button {
+  margin: 0px;
+}
+
+.shape-box button {
+  margin: 0px;
+}
+
+.shape-box button image {
+  filter: drop-shadow(2px 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+window.transparent.background {
+  background: unset;
+}

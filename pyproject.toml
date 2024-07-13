@@ -6,7 +6,7 @@ requires = ["setuptools >= 61.0"]
 name = "MyHumbleSelf"
 version = "0.1.0"
 description = "Show your webcam image on the desktop for presentations."
-keywords = ["webcam", "tool", "presentation"]
+keywords = ["webcam", "camera", "utility", "tool", "presentation", "screencast"]
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [{ name = "dynobo", email = "dynobo@mailbox.org" }]
@@ -21,21 +21,23 @@ classifiers = [
   "Intended Audience :: End Users/Desktop",
   "Operating System :: POSIX :: Linux",
 ]
-dependencies = ["PyGObject>=3.42.2", "opencv-python"]
+dependencies = ["PyGObject>=3.42.2", "opencv-python-headless"]
 optional-dependencies = { dev = [
   "build",
   "mypy",
   "opencv-stubs",
   "pre-commit",
   "pytest",
+  "pytest-cov",
   "ruff",
 ] }
 
 [project.urls]
-Source = "https://github.com/dynobo/my-humble-self"
+Source = "https://github.com/dynobo/myhumbleself"
 
 [project.scripts]
-mhs = "my_humble_self.app:main"
+mhs = "myhumbleself.app:main"
+myhumbleself = "myhumbleself.app:main"
 
 [tool.ruff]
 target-version = "py311"
@@ -101,7 +103,8 @@ known-first-party = ["myhumbleself"]
 
 [tool.mypy]
 files = ["myhumbleself/**/*.py", "tests/**/*.py"]
-follow_imports = "skip"
+# ONHOLD: Switch back to "skip" once mypy internal error is resolved:
+follow_imports = "silent"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

@@ -17,3 +17,29 @@ repos:
       - id: trailing-whitespace
         exclude: ".srt$"
       - id: mixed-line-ending
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        stages: [commit]
+        language: system
+        entry: ruff check --fix .
+        pass_filenames: false
+      - id: ruff-format
+        name: ruff format
+        stages: [commit]
+        language: system
+        entry: ruff format .
+        pass_filenames: false
+      - id: mypy
+        name: mypy
+        stages: [commit]
+        language: system
+        entry: mypy
+        pass_filenames: false
+      - id: pytest
+        name: pytest
+        stages: [commit]
+        language: system
+        entry: pytest
+        pass_filenames: false
