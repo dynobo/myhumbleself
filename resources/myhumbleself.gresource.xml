@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/com/github/dynobo/myhumbleself">
+    <file compressed="true" preprocess="xml-stripblanks">window.ui</file>
+    <file compressed="true">style.css</file>
+    <file compressed="true">shapes/01-circle.png</file>
+    <file compressed="true">shapes/02-oval.png</file>
+    <file compressed="true">shapes/03-square.png</file>
+    <file compressed="true">shapes/04-paint.png</file>
+    <file compressed="true">shapes/05-badge.png</file>
+    <file compressed="true">shapes/06-splat.png</file>
+    <file compressed="true">shapes/99-original.png</file>
+  </gresource>
+  <gresource prefix="/com/github/dynobo/myhumbleself/icons/scalable">
+    <file compressed="true" preprocess="xml-stripblanks">actions/follow-face-symbolic.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">actions/01-circle-symbolic.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">actions/02-oval-symbolic.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">actions/03-square-symbolic.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">actions/04-paint-symbolic.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">actions/05-badge-symbolic.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">actions/06-splat-symbolic.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">actions/99-original-symbolic.svg</file>
+  </gresource>
+</gresources>
