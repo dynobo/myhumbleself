@@ -36,8 +36,11 @@ optional-dependencies = { dev = [
 Source = "https://github.com/dynobo/myhumbleself"
 
 [project.scripts]
-mhs = "myhumbleself.app:main"
 myhumbleself = "myhumbleself.app:main"
+mhs = "myhumbleself.app:main"
+
+[tool.setuptools]
+packages = ["myhumbleself"]
 
 [tool.ruff]
 target-version = "py311"

@@ -2,7 +2,7 @@
 <!-- Created with Cambalache 0.90.4 -->
 <interface>
   <!-- interface-name test.ui -->
-  <requires lib="gtk" version="4.12"/>
+  <requires lib="gtk" version="4.12" />
   <object class="GtkApplicationWindow" id="main_window">
     <property name="title">MyHumbleSelf</property>
     <property name="titlebar">
@@ -27,7 +27,7 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkDropDown" id="camera_dropdown"/>
+                      <object class="GtkDropDown" id="camera_dropdown" />
                     </child>
                     <child>
                       <object class="GtkLabel">
@@ -38,7 +38,7 @@
                       <object class="GtkFlowBox" id="shape_box">
                         <property name="css-classes">shape-box</property>
                         <property name="homogeneous">True</property>
-                        <property name="max-children-per-line">3</property>
+                        <property name="max-children-per-line">4</property>
                         <property name="selection-mode">none</property>
                       </object>
                     </child>
@@ -87,7 +87,7 @@
                           <object class="GtkButton" id="left_button">
                             <property name="icon-name">go-previous</property>
                             <style>
-                              <class name="move-button"/>
+                              <class name="move-button" />
                             </style>
                             <layout>
                               <property name="column">0</property>
@@ -99,7 +99,7 @@
                           <object class="GtkButton" id="right_button">
                             <property name="icon-name">go-next</property>
                             <style>
-                              <class name="move-button"/>
+                              <class name="move-button" />
                             </style>
                             <layout>
                               <property name="column">2</property>
@@ -111,7 +111,7 @@
                           <object class="GtkButton" id="down_button">
                             <property name="icon-name">go-down</property>
                             <style>
-                              <class name="move-button"/>
+                              <class name="move-button" />
                             </style>
                             <layout>
                               <property name="column">1</property>
@@ -124,7 +124,7 @@
                             <property name="halign">start</property>
                             <property name="icon-name">go-up</property>
                             <style>
-                              <class name="move-button"/>
+                              <class name="move-button" />
                             </style>
                             <layout>
                               <property name="column">1</property>
@@ -136,7 +136,7 @@
                           <object class="GtkButton" id="center_button">
                             <property name="icon-name">zoom-original-symbolic</property>
                             <style>
-                              <class name="move-button"/>
+                              <class name="move-button" />
                             </style>
                             <layout>
                               <property name="column">1</property>
@@ -147,7 +147,7 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkSeparator"/>
+                      <object class="GtkSeparator" />
                     </child>
                     <child>
                       <object class="GtkButton">
@@ -161,8 +161,8 @@
             </property>
           </object>
         </child>
-        <child type="end">
-          <object class="GtkToggleButton">
+        <child type="start">
+          <object class="GtkToggleButton" id="follow_face_button">
             <property name="icon-name">zoom-fit-best</property>
           </object>
           <!-- Custom child fragments -->
@@ -170,12 +170,12 @@
       </object>
     </property>
     <child>
-      <object class="GtkPicture" id="picture"/>
+      <object class="GtkPicture" id="picture" />
     </child>
     <style>
-      <class name="main-window"/>
+      <class name="main-window" />
     </style>
   </object>
-  <object class="GtkCssProvider" id="css_provider"/>
-  <object class="GtkStringList" id="ShapeList"/>
+  <object class="GtkCssProvider" id="css_provider" />
+  <object class="GtkStringList" id="ShapeList" />
 </interface>

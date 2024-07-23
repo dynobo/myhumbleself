@@ -17,7 +17,8 @@ class Camera:
         self._cam_id = self.available_cameras[0]
         self.stopped = False
         self.frame: np.ndarray | None = None
-        self.frame_rate: float = 0
+        self.fps: list[float] = [0]
+        self.fps_window = 100
 
     def _get_available_cameras(self) -> list[int]:
         """Heuristically determine available video inputs.
@@ -82,15 +83,8 @@ class Camera:
             fps = 1 / ((tick - last_tick) * clock_period)
             last_tick = tick
 
-            cv2.putText(
-                self.frame,
-                f"FPS out: {fps:5.1f}",
-                (10, 40),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (0, 255, 0),
-                2,
-                cv2.LINE_AA,
-            )
+            self.fps.append(fps)
+            if len(self.fps) > self.fps_window:
+                self.fps.pop(0)
 
         self._capture.release()

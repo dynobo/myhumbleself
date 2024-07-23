@@ -15,7 +15,7 @@ from myhumbleself.camera import Camera
 gi.require_version("Gdk", "4.0")
 gi.require_version("Gtk", "4.0")
 gi.require_version("GdkPixbuf", "2.0")
-from gi.repository import Gdk, GdkPixbuf, Gtk  # noqa: E402
+from gi.repository import Gdk, GdkPixbuf, Gio, Gtk  # noqa: E402
 
 RESOURCE_PATH = Path(__file__).parent / "resources"
 
@@ -27,24 +27,39 @@ class MyHumbleSelf(Gtk.Application):
     def __init__(self, application_id: str) -> None:
         super().__init__(application_id=application_id)
         self.win: Gtk.ApplicationWindow
+        self.resource: Gio.Resource
         self.config = config.load()
         self.face_detection = face_detection.FaceDetection()
         self.camera = Camera()
         self.camera.start(cam_id=None)
-        self.clock_period = 1 / cv2.getTickFrequency()
+        self.clock_period: float = 1 / cv2.getTickFrequency()
         self.shape: np.ndarray | None = None
+        self.in_presentation_mode = False
+        self.fps: list[float] = [0]
+        self.fps_window = 50
+        self.face_coords = face_detection.Rect(0, 0, 1080, 1920)
 
         self.connect("activate", self.on_activate)
         self.connect("shutdown", self.on_shutdown)
 
-    def on_activate(self, app: Gtk.Application) -> None:
+    # TODO: split into smaller functions
+    def on_activate(self, app: Gtk.Application) -> None:  # noqa: PLR0915
+        self.resource = Gio.resource_load(
+            str(Path(__file__).parent / "resources" / "myhumbleself.gresource")
+        )
+        Gio.Resource._register(self.resource)
         builder = Gtk.Builder()
-        builder.add_from_file(f"{RESOURCE_PATH}/window.ui")
+        builder.add_from_resource("/com/github/dynobo/myhumbleself/window.ui")
+
+        theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
+        theme.add_resource_path("/com/github/dynobo/myhumbleself/icons")
 
         self.win = builder.get_object("main_window")
         self.win.set_application(self)
 
+        # TODO: Make picture centered and click through transparent areas
         self.picture = builder.get_object("picture")
+        self.picture.set_cursor_from_name("pointer")
         self.picture.add_tick_callback(self.draw_image)
         evk = Gtk.GestureClick()
         evk.connect("pressed", self.on_picture_clicked)
@@ -52,13 +67,22 @@ class MyHumbleSelf(Gtk.Application):
 
         self.titlebar = builder.get_object("titlebar")
 
+        self.follow_face_button = builder.get_object("follow_face_button")
+        self.follow_face_button.set_icon_name("follow-face-symbolic")
+        self.follow_face_button.connect("clicked", self.on_follow_face_clicked)
+        self.follow_face_button.set_active(
+            self.config["main"].getboolean("follow_face")
+        )
+
         self.css_provider = builder.get_object("css_provider")
         Gtk.StyleContext.add_provider_for_display(
             Gdk.Display.get_default(),
             self.css_provider,
             Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
-        self.css_provider.load_from_string((RESOURCE_PATH / "style.css").read_text())
+        self.css_provider.load_from_resource(
+            "/com/github/dynobo/myhumbleself/style.css"
+        )
 
         camera_list = Gtk.StringList()
         for cam in self.camera.available_cameras:
@@ -70,16 +94,17 @@ class MyHumbleSelf(Gtk.Application):
 
         self.shape_box = builder.get_object("shape_box")
         self.first_button = None
-        for png in sorted((RESOURCE_PATH / "shapes").glob("*.png")):
-            icon = Gtk.Image.new_from_file(str(png))
+        for shape in self.resource.enumerate_children(
+            "/com/github/dynobo/myhumbleself/shapes", Gio.ResourceLookupFlags.NONE
+        ):
             button = Gtk.ToggleButton()
-            button.set_size_request(48, 48)
-            button.set_child(icon)
+            button.set_size_request(32, 32)
+            button.set_icon_name(f"{shape[:-4]}-symbolic")
             button.set_has_frame(False)
-            button.connect("toggled", self.on_shape_toggled, png)
-
+            button.connect("toggled", self.on_shape_toggled, shape)
+            button.set_css_classes([*button.get_css_classes(), "shape-button"])
             # Activate stored shape:
-            if png == RESOURCE_PATH / "shapes" / self.config["main"].get("shape"):
+            if shape == self.config["main"].get("shape"):
                 button.set_active(True)
 
             if self.first_button is None:
@@ -109,12 +134,25 @@ class MyHumbleSelf(Gtk.Application):
 
         self.win.present()
 
-    def on_shape_toggled(self, button: Gtk.ToggleButton, shape_png: Path) -> None:
+    def on_follow_face_clicked(self, button: Gtk.ToggleButton) -> None:
+        self.config.set_persistent("follow_face", button.get_active())
+
+    def on_shape_toggled(self, button: Gtk.ToggleButton, shape: str) -> None:
         if not button.get_active():
             return
 
-        self.shape = None if "99_" in shape_png.name else cv2.imread(str(shape_png))
-        self.config.set_persistent("shape", shape_png.name)
+        if "99" in shape:
+            self.shape = None
+        else:
+            shape_png = self.resource.lookup_data(
+                f"/com/github/dynobo/myhumbleself/shapes/{shape}",
+                Gio.ResourceLookupFlags.NONE,
+            ).get_data()
+            self.shape = cv2.imdecode(
+                np.frombuffer(shape_png, dtype=np.uint8), cv2.IMREAD_COLOR
+            )
+
+        self.config.set_persistent("shape", shape)
 
     def on_center_clicked(self, button: Gtk.Button) -> None:
         self.config.set_persistent("offset_x", 0)
@@ -138,59 +176,86 @@ class MyHumbleSelf(Gtk.Application):
         self.camera.stop()
 
     def get_processed_image(self) -> np.ndarray | None:
-        tick_before = cv2.getTickCount()
         image = self.camera.get_frame()
         if image is None:
             return None
 
-        coords = self.face_detection.get_focus_area(image)
+        if self.config["main"].getboolean("follow_face"):
+            face_coords = self.face_detection.get_focus_area(image)
+        else:
+            base_size = min(*image.shape[:2]) // 3
+            face_coords = face_detection.Rect(
+                top=(image.shape[0] - base_size) // 2,
+                left=(image.shape[1] - base_size) // 2,
+                width=base_size,
+                height=base_size,
+            )
 
         image = processing.convert_colorspace(image)
         if self.shape is not None:
             image = processing.crop_to_shape(
                 image=image,
                 shape=self.shape,
-                face=coords,
+                face=face_coords,
                 zoom_factor=self.config["main"].getint("zoom_factor", 100) / 100,
                 offset_xy=(
                     self.config["main"].getint("offset_x", 0),
                     self.config["main"].getint("offset_y", 0),
                 ),
             )
+        return image
 
-        if logger.getEffectiveLevel() == logging.DEBUG:
-            tick_after = cv2.getTickCount()
-            fps = 1 / ((tick_after - tick_before) * self.clock_period)
-            cv2.putText(
-                image,
-                f"FPS post: {fps:5.1f}",
-                (10, 80),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (0, 255, 0, 255),
-                2,
-                cv2.LINE_AA,
-            )
-
+    def draw_fps(self, image: np.ndarray) -> np.ndarray:
+        font_scale = max(*image.shape) / 500
+        offset_x = int(font_scale * 10)
+        offset_y = int(font_scale * 20)
+        cv2.putText(
+            img=image,
+            text=f"FPS in: {np.mean(self.camera.fps):5.1f}",
+            org=(offset_x, offset_y),
+            fontFace=cv2.FONT_HERSHEY_PLAIN,
+            fontScale=font_scale,
+            color=(0, 255, 0, 255),
+            thickness=2,
+            lineType=cv2.LINE_AA,
+        )
+        cv2.putText(
+            img=image,
+            text=f"FPS out: {self.fps:5.1f}",
+            org=(offset_x, offset_y * 2),
+            fontFace=cv2.FONT_HERSHEY_PLAIN,
+            fontScale=font_scale,
+            color=(0, 255, 0, 255),
+            thickness=2,
+            lineType=cv2.LINE_AA,
+        )
         return image
 
     def on_picture_clicked(
-        self, event: Gtk.GestureClick, in_press: int, x: float, y: float
+        self, event: Gtk.GestureClick, n_press: int, x: float, y: float
     ) -> None:
-        is_decorated = not self.win.get_decorated()
+        double_clicks = 2
+        if n_press == double_clicks:
+            self.toggle_presentation_mode()
+
+    def toggle_presentation_mode(self) -> None:
+        self.in_presentation_mode = not self.in_presentation_mode
         titlebar_height = self.win.get_titlebar().get_height()
         css_classes = self.win.get_css_classes()
-        if is_decorated:
-            css_classes.remove("transparent")
-        else:
+        if self.in_presentation_mode:
             css_classes.append("transparent")
+            self.win.set_decorated(False)
+            self.picture.set_margin_top(titlebar_height)
+        else:
+            css_classes.remove("transparent")
+            self.win.set_decorated(True)
+            self.picture.set_margin_top(0)
 
         self.win.set_css_classes(css_classes)
 
-        self.win.set_decorated(is_decorated)
-        self.picture.set_margin_top(0 if is_decorated else titlebar_height)
-
     def draw_image(self, widget: Gtk.Widget, idle: Gdk.FrameClock) -> bool:
+        tick_before = cv2.getTickCount()
+
         image = self.get_processed_image()
 
         if image is None:
@@ -208,6 +273,18 @@ class MyHumbleSelf(Gtk.Application):
         )
         texture = Gdk.Texture.new_for_pixbuf(pixbuf)
         widget.set_paintable(texture)
+
+        if not True and logger.getEffectiveLevel() == logging.DEBUG:
+            self.win.set_title(
+                f"MyHumbleSelf -"
+                f"FPS in/out: {np.mean(self.camera.fps):.1f} / {np.mean(self.fps):.1f}"
+            )
+
+        tick_after = cv2.getTickCount()
+        fps = 1 / ((tick_after - tick_before) * self.clock_period)
+        self.fps.append(fps)
+        if len(self.fps) > self.fps_window:
+            self.fps.pop(0)
 
         return True
 

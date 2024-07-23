@@ -38,9 +38,10 @@ def load() -> WritingConfigParser:
     config = WritingConfigParser(
         defaults={
             "zoom_factor": "100",
+            "follow_face": "True",
             "offset_x": "0",
             "offset_y": "0",
-            "shape": "01_circle.png",
+            "shape": "01-circle.png",
         },
     )
     if CONFIG_FILE.exists():
