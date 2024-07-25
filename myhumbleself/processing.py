@@ -13,6 +13,9 @@ def convert_colorspace(frame: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
 
 
+# TODO: Improve positioning and zooming (deactivate buttons on corners)
+
+
 def crop_to_shape(
     image: np.ndarray,
     shape: np.ndarray,

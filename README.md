@@ -49,4 +49,4 @@ TBD
 
 ## Certification
 
-![WOMM](https://raw.githubusercontent.com/dynobo/my-humble-self/main/badge.png)
+![WOMM](https://raw.githubusercontent.com/dynobo/myhumbleself/main/badge.png)
