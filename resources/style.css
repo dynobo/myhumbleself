@@ -13,3 +13,12 @@
 window.transparent.background {
   background: unset;
 }
+
+.overlay-button {
+  border-radius: 32px;
+  background-color: rgba(125, 125, 125, 0.4);
+}
+
+.overlay-button image {
+  -gtk-icon-size: 32px;
+}

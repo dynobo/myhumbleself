@@ -22,6 +22,10 @@ RESOURCE_PATH = Path(__file__).parent / "resources"
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+# TODO: Support GTK4.6 (in window.ui)
+# TODO: Support Camera inputs
+# TODO: replace no-zoom-char in slider with something more common
+
 
 class MyHumbleSelf(Gtk.Application):
     def __init__(self, application_id: str) -> None:
@@ -58,12 +62,22 @@ class MyHumbleSelf(Gtk.Application):
         self.win.set_application(self)
 
         # TODO: Make picture centered and click through transparent areas
+        # TODO: Show overlay on hover to indicate hide/show controls
+        # TODO: Show pointer cursor only on overlay
         self.picture = builder.get_object("picture")
-        self.picture.set_cursor_from_name("pointer")
         self.picture.add_tick_callback(self.draw_image)
+
         evk = Gtk.GestureClick()
         evk.connect("pressed", self.on_picture_clicked)
         self.picture.add_controller(evk)
+
+        evk2 = Gtk.EventControllerMotion()
+        evk2.connect("leave", self.on_picture_leave)
+        evk2.connect("motion", self.on_picture_enter)
+        self.picture.add_controller(evk2)
+
+        self.toggle_controls_button = builder.get_object("toggle_controls_button")
+        self.toggle_controls_button.set_cursor_from_name("pointer")
 
         self.titlebar = builder.get_object("titlebar")
 
@@ -237,6 +251,17 @@ class MyHumbleSelf(Gtk.Application):
         double_clicks = 2
         if n_press == double_clicks:
             self.toggle_presentation_mode()
+
+    def on_picture_enter(
+        self, event: Gtk.EventControllerMotion, x: float, y: float
+    ) -> None:
+        self.toggle_controls_button.set_visible(True)
+
+    def on_picture_leave(
+        self,
+        event: Gtk.EventControllerMotion,
+    ) -> None:
+        self.toggle_controls_button.set_visible(False)
 
     def toggle_presentation_mode(self) -> None:
         self.in_presentation_mode = not self.in_presentation_mode
