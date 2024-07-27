@@ -42,6 +42,7 @@ def load() -> WritingConfigParser:
             "offset_x": "0",
             "offset_y": "0",
             "shape": "01-circle.png",
+            "last_active_camera": "0",
         },
     )
     if CONFIG_FILE.exists():

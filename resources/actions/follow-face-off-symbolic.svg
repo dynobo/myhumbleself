@@ -5,7 +5,7 @@
    width="16px"
    version="1.1"
    id="svg4"
-   sodipodi:docname="follow-face-symbolic.svg"
+   sodipodi:docname="follow-face-off-symbolic.svg"
    inkscape:version="1.3.2 (091e20ef0f, 2023-11-25, custom)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
@@ -22,9 +22,9 @@
      inkscape:pageopacity="0.0"
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
-     inkscape:zoom="45.25"
-     inkscape:cx="6.8618785"
-     inkscape:cy="8.2651934"
+     inkscape:zoom="16.01"
+     inkscape:cx="6.7145534"
+     inkscape:cy="8.9943785"
      inkscape:window-width="1487"
      inkscape:window-height="949"
      inkscape:window-x="26"
@@ -39,9 +39,16 @@
        id="path1" />
   </g>
   <path
-     d="m 8.0000003,3.2394542 c -1.2913822,0 -2.3391071,1.047725 -2.3391071,2.339107 0,1.2913818 1.0477249,2.3391068 2.3391071,2.3391068 1.2913821,0 2.3391067,-1.047725 2.3391067,-2.3391068 0,-1.291382 -1.0477247,-2.3391069 -2.3391067,-2.339107 z M 6.8304466,8.6973704 c -1.9431644,0 -3.5086596,1.2340047 -3.5086596,3.1771696 0,0.428706 0.1557214,0.863721 0.7797018,0.886006 H 11.89851 c 0.623968,-0.02228 0.779703,-0.457281 0.779703,-0.886006 0,-1.9431659 -1.565495,-3.1771695 -3.5086591,-3.1771695 z"
-     fill="#222222"
      id="path1-3"
-     style="stroke-width:0.779703"
-     sodipodi:nodetypes="sssssssccsss" />
+     style="stroke-width:0.779703;fill:#222222;fill-opacity:1"
+     d="M 8 3.2402344 C 6.7086191 3.2402344 5.6601562 4.2867443 5.6601562 5.578125 C 5.6601562 6.8695055 6.7086191 7.9179688 8 7.9179688 C 9.2913808 7.9179688 10.339844 6.8695055 10.339844 5.578125 C 10.339844 4.2867443 9.2913807 3.2402345 8 3.2402344 z M 7.3339844 8.6972656 L 11.396484 12.759766 L 11.898438 12.759766 C 12.522405 12.737486 12.677734 12.303725 12.677734 11.875 C 12.677734 9.931836 11.113084 8.6972656 9.1699219 8.6972656 L 7.3339844 8.6972656 z M 4.9238281 9.1601562 C 3.9592284 9.6865515 3.3222656 10.636315 3.3222656 11.875 C 3.3222656 12.303706 3.4775827 12.737481 4.1015625 12.759766 L 8.5234375 12.759766 L 4.9238281 9.1601562 z " />
+  <rect
+     style="display:inline;fill:#222222;fill-opacity:1;fill-rule:evenodd;stroke-width:166.94"
+     id="rect1"
+     width="13.334168"
+     height="2.0309911"
+     x="4.6466241"
+     y="-1.0154954"
+     transform="rotate(45)"
+     ry="0.74494934" />
 </svg>

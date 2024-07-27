@@ -1,5 +1,6 @@
 import logging
 from threading import Thread
+from time import sleep
 
 import cv2
 import numpy as np
@@ -14,11 +15,13 @@ class Camera:
     def __init__(self) -> None:
         # TODO: choose appropriate camera resolution dynamically or downscale image
         self.available_cameras = self._get_available_cameras()
-        self._cam_id = self.available_cameras[0]
-        self.stopped = False
+        self._cam_id: int | None = None
+        self._capture: cv2.VideoCapture | None = None
         self.frame: np.ndarray | None = None
         self.fps: list[float] = [0]
         self.fps_window = 100
+        # TODO: Use placeholder image
+        self.placeholder_image = np.ones((480, 640, 3), np.uint8)
 
     def _get_available_cameras(self) -> list[int]:
         """Heuristically determine available video inputs.
@@ -35,6 +38,7 @@ class Camera:
         for idx in range(10):
             cap = cv2.VideoCapture(idx)
             try:
+                # TODO: Grab frame and use for input source dropdown
                 _ = cap.getBackendName()
             except cv2.error:
                 logger.debug("Camera at /video%s seems unavailable", idx)
@@ -43,15 +47,25 @@ class Camera:
             finally:
                 cap.release()
 
-        if not cams:
-            raise RuntimeError(
-                "No accessible camera found! Is some other application using the it?"
-            )
-
         return cams
 
     def start(self, cam_id: int | None = None) -> None:
-        self._cam_id = cam_id or self.available_cameras[0]
+        if not self.available_cameras:
+            logger.error("No camera accessible! Is another application using the it?")
+            logger.info("Loading placeholder image.")
+            self._capture = None
+            self.frame = self.placeholder_image
+            return
+
+        if cam_id in self.available_cameras:
+            self._cam_id = cam_id
+        elif not cam_id:
+            logger.info("No camera specified. Fallback to first one.")
+            self._cam_id = self.available_cameras[0]
+        else:
+            logger.warning("Camera %s not available. Fallback to first one.", cam_id)
+            self._cam_id = self.available_cameras[0]
+
         self._capture = cv2.VideoCapture(self._cam_id, cv2.CAP_V4L2)
 
         # Set compressed codec for way better performance:
@@ -65,7 +79,9 @@ class Camera:
         Thread(target=self.update, args=()).start()
 
     def stop(self) -> None:
-        self.stopped = True
+        if self._capture and self._capture.isOpened():
+            self._capture.release()
+            sleep(0.1)
 
     def get_frame(self) -> np.ndarray | None:
         return self.frame
@@ -74,7 +90,8 @@ class Camera:
         clock_period = 1 / cv2.getTickFrequency()
         last_tick = cv2.getTickCount()
         while True:
-            if self.stopped:
+            if not self._capture or not self._capture.isOpened():
+                self.frame = self.placeholder_image
                 break
 
             self.grabbed, self.frame = self._capture.read()
@@ -87,4 +104,5 @@ class Camera:
             if len(self.fps) > self.fps_window:
                 self.fps.pop(0)
 
-        self._capture.release()
+        if self._capture:
+            self._capture.release()
