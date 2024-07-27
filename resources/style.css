@@ -8,17 +8,32 @@
 
 .shape-box button image {
   -gtk-icon-transform: scale(1.5);
+  -gtk-icon-size: 32px;
 }
 
 window.transparent.background {
   background: unset;
 }
 
-.overlay-button {
-  border-radius: 32px;
-  background-color: rgba(125, 125, 125, 0.4);
+.overlay button {
+  filter: invert(1);
+  border-radius: 16px;
+  opacity: 0.6;
+  transition: opacity 3s;
 }
 
-.overlay-button image {
-  -gtk-icon-size: 32px;
+.overlay button:hover {
+  opacity: 1;
+}
+
+.overlay .center-box button {
+  border-radius: 0px;
+}
+
+.overlay .center-box button:first-child {
+  border-radius: 16px 0px 0px 16px;
+}
+
+.overlay .center-box button:last-child {
+  border-radius: 0px 16px 16px 0px;
 }

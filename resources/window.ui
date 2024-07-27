@@ -8,9 +8,17 @@
     <property name="titlebar">
       <object class="GtkHeaderBar" id="titlebar">
         <property name="hexpand">True</property>
-        <child type="end">
-          <object class="GtkMenuButton">
-            <property name="icon-name">open-menu-symbolic</property>
+        <child type="start">
+          <object class="GtkToggleButton" id="follow_face_button">
+            <property name="has-frame">False</property>
+            <property name="icon-name">view-fullscreen-symbolic</property>
+          </object>
+          <!-- Custom child fragments -->
+        </child>
+        <child type="start">
+          <object class="GtkMenuButton" id="shape_menu_button">
+            <property name="has-frame">False</property>
+            <property name="icon-name">image-x-generic-symbolic</property>
             <property name="popover">
               <object class="GtkPopover">
                 <property name="cascade-popdown">True</property>
@@ -21,20 +29,6 @@
                     <property name="hexpand">True</property>
                     <property name="orientation">vertical</property>
                     <child>
-                      <object class="GtkLabel">
-                        <property name="label">Camera</property>
-                        <property name="margin-top">5</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkDropDown" id="camera_dropdown"/>
-                    </child>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="label">Shape</property>
-                      </object>
-                    </child>
-                    <child>
                       <object class="GtkFlowBox" id="shape_box">
                         <property name="css-classes">shape-box</property>
                         <property name="homogeneous">True</property>
@@ -42,149 +36,29 @@
                         <property name="selection-mode">none</property>
                       </object>
                     </child>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="label">Zoom</property>
-                        <property name="margin-top">5</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkScale" id="zoom_scale">
-                        <property name="adjustment">
-                          <object class="GtkAdjustment">
-                            <property name="lower">50.0</property>
-                            <property name="page-increment">0.25</property>
-                            <property name="step-increment">5.0</property>
-                            <property name="upper">150.0</property>
-                            <property name="value">100.0</property>
-                          </object>
-                        </property>
-                        <property name="fill-level">0.0</property>
-                        <property name="has-origin">False</property>
-                        <property name="restrict-to-fill-level">False</property>
-                        <marks>
-                          <mark position="bottom" value="50.0">−</mark>
-                          <mark position="bottom" value="100.0">○</mark>
-                          <mark position="bottom" value="150.0">+</mark>
-                        </marks>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="label">Position</property>
-                        <property name="margin-bottom">6</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkGrid">
-                        <property name="column-homogeneous">True</property>
-                        <property name="halign">center</property>
-                        <property name="height-request">45</property>
-                        <property name="orientation">vertical</property>
-                        <property name="row-homogeneous">True</property>
-                        <property name="valign">start</property>
-                        <child>
-                          <object class="GtkButton" id="left_button">
-                            <property name="icon-name">go-previous</property>
-                            <style>
-                              <class name="move-button"/>
-                            </style>
-                            <layout>
-                              <property name="column">0</property>
-                              <property name="row">1</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkButton" id="right_button">
-                            <property name="icon-name">go-next</property>
-                            <style>
-                              <class name="move-button"/>
-                            </style>
-                            <layout>
-                              <property name="column">2</property>
-                              <property name="row">1</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkButton" id="down_button">
-                            <property name="icon-name">go-down</property>
-                            <style>
-                              <class name="move-button"/>
-                            </style>
-                            <layout>
-                              <property name="column">1</property>
-                              <property name="row">2</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkButton" id="up_button">
-                            <property name="halign">start</property>
-                            <property name="icon-name">go-up</property>
-                            <style>
-                              <class name="move-button"/>
-                            </style>
-                            <layout>
-                              <property name="column">1</property>
-                              <property name="row">0</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkButton" id="center_button">
-                            <property name="icon-name">zoom-fit-best-symbolic</property>
-                            <style>
-                              <class name="move-button"/>
-                            </style>
-                            <layout>
-                              <property name="column">1</property>
-                              <property name="row">1</property>
-                            </layout>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkSeparator"/>
-                    </child>
-                    <child>
-                      <object class="GtkButton">
-                        <property name="has-frame">False</property>
-                        <property name="label">About...</property>
-                      </object>
-                    </child>
                   </object>
                 </child>
               </object>
             </property>
-            <property name="tooltip-text">Open settings</property>
+            <property name="tooltip-text">Select shape</property>
           </object>
         </child>
         <child type="start">
-          <object class="GtkToggleButton" id="follow_face_button">
-            <property name="icon-name">zoom-fit-best</property>
-            <property name="tooltip-text">Toggle follow-my-face mode</property>
+          <object class="GtkDropDown" id="camera_dropdown">
+            <property name="tooltip-text">Select video device</property>
           </object>
-          <!-- Custom child fragments -->
+        </child>
+        <child type="end">
+          <object class="GtkButton" id="about_button">
+            <property name="has-frame">False</property>
+            <property name="icon-name">dialog-information-symbolic</property>
+            <property name="tooltip-text">Show about window</property>
+          </object>
         </child>
       </object>
     </property>
     <child>
       <object class="GtkOverlay" id="overlay">
-        <child type="overlay">
-          <object class="GtkButton" id="toggle_controls_button">
-            <property name="css-classes">overlay-button</property>
-            <property name="halign">center</property>
-            <property name="has-frame">False</property>
-            <property name="height-request">64</property>
-            <property name="icon-name">gnome-control-center-symbolic</property>
-            <property name="valign">center</property>
-            <property name="visible">False</property>
-            <property name="width-request">64</property>
-          </object>
-        </child>
         <child>
           <object class="GtkPicture" id="picture">
             <property name="hexpand">True</property>
@@ -192,6 +66,122 @@
             <layout>
               <property name="clip-overlay">True</property>
             </layout>
+          </object>
+        </child>
+        <child type="overlay">
+          <object class="GtkGrid" id="controls_grid">
+            <property name="column-homogeneous">True</property>
+            <property name="css-classes">overlay</property>
+            <property name="height-request">45</property>
+            <property name="margin-bottom">10</property>
+            <property name="margin-end">10</property>
+            <property name="margin-start">10</property>
+            <property name="margin-top">10</property>
+            <property name="orientation">vertical</property>
+            <property name="row-homogeneous">True</property>
+            <property name="visible">False</property>
+            <child>
+              <object class="GtkBox">
+                <property name="css-classes">center-box</property>
+                <property name="halign">center</property>
+                <property name="valign">center</property>
+                <child>
+                  <object class="GtkButton" id="zoom_out_button">
+                    <property name="halign">start</property>
+                    <property name="icon-name">zoom-out-symbolic</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="reset_button">
+                    <property name="halign">center</property>
+                    <property name="icon-name">zoom-original-symbolic</property>
+                    <property name="valign">center</property>
+                    <style>
+                      <class name="move-button"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="zoom_in_button">
+                    <property name="halign">end</property>
+                    <property name="icon-name">zoom-in-symbolic</property>
+                    <property name="valign">center</property>
+                  </object>
+                </child>
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">1</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="left_button">
+                <property name="halign">start</property>
+                <property name="icon-name">go-previous</property>
+                <property name="valign">center</property>
+                <style>
+                  <class name="move-button"/>
+                </style>
+                <layout>
+                  <property name="column">0</property>
+                  <property name="row">1</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="right_button">
+                <property name="halign">end</property>
+                <property name="icon-name">go-next</property>
+                <property name="valign">center</property>
+                <style>
+                  <class name="move-button"/>
+                </style>
+                <layout>
+                  <property name="column">2</property>
+                  <property name="row">1</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="down_button">
+                <property name="halign">center</property>
+                <property name="icon-name">go-down</property>
+                <property name="valign">end</property>
+                <style>
+                  <class name="move-button"/>
+                </style>
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">2</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="up_button">
+                <property name="halign">center</property>
+                <property name="icon-name">go-up</property>
+                <property name="valign">start</property>
+                <style>
+                  <class name="move-button"/>
+                </style>
+                <layout>
+                  <property name="column">1</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="toggle_controls_button">
+                <property name="halign">end</property>
+                <property name="icon-name">gnome-control-center-symbolic</property>
+                <property name="valign">start</property>
+                <layout>
+                  <property name="column">2</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
           </object>
         </child>
       </object>
