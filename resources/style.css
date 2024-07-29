@@ -12,7 +12,7 @@
 }
 
 .camera-box button image {
-  -gtk-icon-size: 64px;
+  -gtk-icon-size: 96px;
 }
 
 window.transparent.background {

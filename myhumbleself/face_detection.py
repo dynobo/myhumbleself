@@ -7,8 +7,8 @@ import numpy as np
 
 from myhumbleself.structures import Rect
 
+# TODO: Inherit loglevel or use same logger as in app (check normcap)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class FaceDetection:

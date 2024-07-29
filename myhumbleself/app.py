@@ -1,5 +1,7 @@
+import argparse
 import logging
 import os
+import tempfile
 from pathlib import Path
 
 # Hide warnings show during search for cameras
@@ -20,7 +22,14 @@ from gi.repository import Gdk, GdkPixbuf, Gio, Gtk  # noqa: E402
 RESOURCE_PATH = Path(__file__).parent / "resources"
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.ERROR)
+
+
+def init_logger(log_level: str = "WARNING") -> None:
+    """Initializes a logger with a specified log level."""
+    log_format = "%(asctime)s - %(levelname)-7s - %(name)s:%(lineno)d - %(message)s"
+    datefmt = "%H:%M:%S"
+    logging.basicConfig(format=log_format, datefmt=datefmt, level=log_level)
+
 
 # TODO: Support GTK4.6 (in window.ui)
 # TODO: Support Camera inputs
@@ -32,7 +41,6 @@ class MyHumbleSelf(Gtk.Application):
     picture: Gtk.Picture
 
     # Headerbar widgets
-    camera_box: Gtk.DropDown
     follow_face_button: Gtk.ToggleButton
     shape_box: Gtk.FlowBox
     camera_box: Gtk.FlowBox
@@ -58,7 +66,7 @@ class MyHumbleSelf(Gtk.Application):
         self.config = config.load()
         self.face_detection = face_detection.FaceDetection()
         self.camera = Camera()
-        self.camera.start(cam_id=None)
+        self.camera.start(cam_id=self.config["main"].getint("last_active_camera", 0))
         self.clock_period: float = 1 / cv2.getTickFrequency()
         self.shape: np.ndarray | None = None
         self.in_presentation_mode = False
@@ -124,10 +132,15 @@ class MyHumbleSelf(Gtk.Application):
         self.win.present()
 
     def init_camera_box(self) -> Gtk.DropDown:
+        camera_menu_button = self.builder.get_object("camera_menu_button")
         camera_box = self.builder.get_object("camera_box")
         first_button = None
-        for cam_id in self.camera.available_cameras + [42]:
-            image = Gtk.Image.new_from_icon_name("pin-symbolic")
+        for cam_id, cam_image in self.camera.available_cameras.items():
+            with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
+                temp_image = cv2.resize(cam_image, fx=0.20, fy=0.20, dsize=(0, 0))
+                cv2.imwrite(temp_file.name, temp_image)
+                image = Gtk.Image.new_from_file(temp_file.name)
+
             label = Gtk.Label()
             label.set_text(f"{self.cam_item_prefix}{cam_id}")
 
@@ -156,9 +169,11 @@ class MyHumbleSelf(Gtk.Application):
 
             camera_box.append(button)
 
-        # TODO: Re-add when debugging done
-        # if len(self.camera.available_cameras) == 1:
-        #    camera_menu_button.set_visible(False)
+        if (
+            len(self.camera.available_cameras) == 1
+            and logger.getEffectiveLevel() != logging.DEBUG
+        ):
+            camera_menu_button.set_visible(False)
 
         return camera_box
 
@@ -411,4 +426,12 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable debug logging."
+    )
+
+    log_level = "DEBUG" if parser.parse_args().verbose else "WARNING"
+    init_logger(log_level=log_level)
+
     main()
