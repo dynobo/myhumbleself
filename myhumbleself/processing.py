@@ -6,7 +6,6 @@ import numpy as np
 from myhumbleself.face_detection import Rect
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 def convert_colorspace(frame: np.ndarray) -> np.ndarray:

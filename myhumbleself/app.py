@@ -15,12 +15,12 @@ from myhumbleself.camera import Camera
 gi.require_version("Gdk", "4.0")
 gi.require_version("Gtk", "4.0")
 gi.require_version("GdkPixbuf", "2.0")
-from gi.repository import Gdk, GdkPixbuf, Gio, GObject, Gtk  # noqa: E402
+from gi.repository import Gdk, GdkPixbuf, Gio, Gtk  # noqa: E402
 
 RESOURCE_PATH = Path(__file__).parent / "resources"
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.ERROR)
 
 # TODO: Support GTK4.6 (in window.ui)
 # TODO: Support Camera inputs
@@ -32,9 +32,10 @@ class MyHumbleSelf(Gtk.Application):
     picture: Gtk.Picture
 
     # Headerbar widgets
-    camera_dropdown: Gtk.DropDown
+    camera_box: Gtk.DropDown
     follow_face_button: Gtk.ToggleButton
     shape_box: Gtk.FlowBox
+    camera_box: Gtk.FlowBox
 
     # Controls Container
     controls_grid: Gtk.Grid
@@ -64,7 +65,7 @@ class MyHumbleSelf(Gtk.Application):
         self.fps: list[float] = [0]
         self.fps_window = 50
         self.face_coords = face_detection.Rect(0, 0, 1080, 1920)
-        self.cam_item_prefix = "■🢐 "
+        self.cam_item_prefix = "/dev/video"
 
         self.connect("activate", self.on_activate)
         self.connect("shutdown", self.on_shutdown)
@@ -89,7 +90,7 @@ class MyHumbleSelf(Gtk.Application):
 
         self.shape_box = self.init_shape_box()
         self.follow_face_button = self.init_follow_face_button()
-        self.camera_dropdown = self.init_camera_dropdown()
+        self.camera_box = self.init_camera_box()
 
         self.controls_grid = self.builder.get_object("controls_grid")
         self.overlay = self.builder.get_object("overlay")
@@ -122,28 +123,44 @@ class MyHumbleSelf(Gtk.Application):
 
         self.win.present()
 
-    def init_camera_dropdown(self) -> Gtk.DropDown:
-        last_cam_id = self.config["main"].getint("last_active_camera", 0)
-        last_cam_idx = 0
-        camera_list = Gtk.StringList()
+    def init_camera_box(self) -> Gtk.DropDown:
+        camera_box = self.builder.get_object("camera_box")
+        first_button = None
+        for cam_id in self.camera.available_cameras + [42]:
+            image = Gtk.Image.new_from_icon_name("pin-symbolic")
+            label = Gtk.Label()
+            label.set_text(f"{self.cam_item_prefix}{cam_id}")
 
-        for i, cam in enumerate(self.camera.available_cameras):
-            camera_list.append(f"{self.cam_item_prefix}{cam}")
-            if cam == last_cam_id:
-                last_cam_idx = i
+            button_box = Gtk.Box()
+            button_box.set_orientation(Gtk.Orientation.VERTICAL)
+            button_box.append(image)
+            button_box.append(label)
 
-        # TODO: Remove hardcoded camera
-        camera_list.append(f"{self.cam_item_prefix}42")
+            button = Gtk.ToggleButton()
+            button.set_size_request(56, 56)
+            button.set_has_frame(False)
+            button.set_child(button_box)
 
-        camera_dropdown = self.builder.get_object("camera_dropdown")
-        camera_dropdown.props.model = camera_list
-        camera_dropdown.set_selected(last_cam_idx)
-        camera_dropdown.connect("notify::selected-item", self.on_camera_selected)
+            button.connect("toggled", self.on_camera_toggled, cam_id)
+            button.set_css_classes([*button.get_css_classes(), "camera-button"])
 
-        if camera_list.get_n_items() == 1:
-            camera_dropdown.set_visible(False)
+            # Activate stored shape:
+            if cam_id == self.config["main"].getint("last_active_camera", 0):
+                button.set_active(True)
 
-        return camera_dropdown
+            # Set button group
+            if first_button is None:
+                first_button = button
+            else:
+                button.set_group(first_button)
+
+            camera_box.append(button)
+
+        # TODO: Re-add when debugging done
+        # if len(self.camera.available_cameras) == 1:
+        #    camera_menu_button.set_visible(False)
+
+        return camera_box
 
     def init_picture(self) -> Gtk.Picture:
         # TODO: Make picture centered and click through transparent areas
@@ -233,11 +250,9 @@ class MyHumbleSelf(Gtk.Application):
 
         self.config.set_persistent("shape", shape)
 
-    def on_camera_selected(
-        self, dropdown: Gtk.DropDown, selected_item: GObject.ParamSpec
-    ) -> None:
-        selected_item = dropdown.get_selected_item().get_string()
-        cam_id = int(selected_item.removeprefix(self.cam_item_prefix))
+    def on_camera_toggled(self, button: Gtk.ToggleButton, cam_id: int) -> None:
+        if not button.get_active():
+            return
         self.camera.stop()
         self.camera.start(cam_id)
         self.config.set_persistent("last_active_camera", cam_id)
