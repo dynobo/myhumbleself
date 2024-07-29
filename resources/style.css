@@ -2,13 +2,17 @@
   margin: 0px;
 }
 
-.shape-box button {
+.shape-box button,
+.camera-box button {
   margin: 0px;
 }
 
 .shape-box button image {
-  -gtk-icon-transform: scale(1.5);
-  -gtk-icon-size: 32px;
+  -gtk-icon-size: 48px;
+}
+
+.camera-box button image {
+  -gtk-icon-size: 64px;
 }
 
 window.transparent.background {

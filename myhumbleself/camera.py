@@ -8,7 +8,6 @@ import numpy as np
 # https://github.com/ptomato/REP-instrumentation/blob/master/rep/generic/opencv_webcam.py
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class Camera:
