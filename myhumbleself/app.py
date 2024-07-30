@@ -11,8 +11,7 @@ import cv2
 import gi
 import numpy as np
 
-from myhumbleself import config, face_detection, processing
-from myhumbleself.camera import Camera
+from myhumbleself import camera, config, face_detection, processing
 
 gi.require_version("Gdk", "4.0")
 gi.require_version("Gtk", "4.0")
@@ -65,8 +64,7 @@ class MyHumbleSelf(Gtk.Application):
         self.resource: Gio.Resource
         self.config = config.load()
         self.face_detection = face_detection.FaceDetection()
-        self.camera = Camera()
-        self.camera.start(cam_id=self.config["main"].getint("last_active_camera", 0))
+        self.camera = camera.Camera()
         self.clock_period: float = 1 / cv2.getTickFrequency()
         self.shape: np.ndarray | None = None
         self.in_presentation_mode = False
@@ -136,6 +134,12 @@ class MyHumbleSelf(Gtk.Application):
         camera_box = self.builder.get_object("camera_box")
         first_button = None
         for cam_id, cam_image in self.camera.available_cameras.items():
+            if (
+                cam_id == camera.PLACEHOLDER_CAM_ID
+                and logger.getEffectiveLevel() != logging.DEBUG
+            ):
+                continue
+
             with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
                 temp_image = cv2.resize(cam_image, fx=0.20, fy=0.20, dsize=(0, 0))
                 cv2.imwrite(temp_file.name, temp_image)
@@ -157,7 +161,7 @@ class MyHumbleSelf(Gtk.Application):
             button.connect("toggled", self.on_camera_toggled, cam_id)
             button.set_css_classes([*button.get_css_classes(), "camera-button"])
 
-            # Activate stored shape:
+            # Activate stored camera:
             if cam_id == self.config["main"].getint("last_active_camera", 0):
                 button.set_active(True)
 
