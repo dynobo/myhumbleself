@@ -134,6 +134,7 @@ class FaceDetection:
         faces = self._detect_faces(image, method="cnn")
 
         if logger.getEffectiveLevel() == logging.DEBUG:
+            # Draw BBox of all detected raw faces
             for f in faces:
                 self._draw_bounding_box(image, f, color=(0, 125, 0))
 
@@ -145,7 +146,8 @@ class FaceDetection:
 
         face = self._smooth_geometry()
 
-        if logger.getEffectiveLevel() == logging.DEBUG and face:
+        if logger.getEffectiveLevel() <= logging.INFO and face:
+            # Draw smoothed BBox for largest face
             self._draw_bounding_box(image, face, color=(0, 255, 0))
 
         return face
