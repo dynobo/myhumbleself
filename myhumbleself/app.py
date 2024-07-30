@@ -134,6 +134,7 @@ class MyHumbleSelf(Gtk.Application):
         camera_box = self.builder.get_object("camera_box")
         first_button = None
         for cam_id, cam_image in self.camera.available_cameras.items():
+            # Show test image in camera menu only in debug mode:
             if (
                 cam_id == camera.PLACEHOLDER_CAM_ID
                 and logger.getEffectiveLevel() != logging.DEBUG
@@ -173,6 +174,7 @@ class MyHumbleSelf(Gtk.Application):
 
             camera_box.append(button)
 
+        # Hide camera menu if only one camera is available. Except when in debug mode:
         if (
             len(self.camera.available_cameras) == 1
             and logger.getEffectiveLevel() != logging.DEBUG
@@ -432,10 +434,20 @@ def main() -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable debug logging."
+        "-v", "--verbose", action="store_true", help="Enable info logging."
+    )
+    parser.add_argument(
+        "-vv", "--very-verbose", action="store_true", help="Enable debug logging."
     )
 
-    log_level = "DEBUG" if parser.parse_args().verbose else "WARNING"
+    log_level = "WARNING"
+
+    if parser.parse_args().verbose:
+        log_level = "INFO"
+
+    if parser.parse_args().very_verbose:
+        log_level = "DEBUG"
+
     init_logger(log_level=log_level)
 
     main()

@@ -2,11 +2,10 @@ import logging
 from pathlib import Path
 from threading import Thread
 from time import sleep
+from typing import Any
 
 import cv2
 import numpy as np
-
-# https://github.com/ptomato/REP-instrumentation/blob/master/rep/generic/opencv_webcam.py
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +14,7 @@ PLACEHOLDER_CAM_ID = 99
 
 class PlaceholderVideoCapture:
     def __init__(self) -> None:
+        # TODO: Nicer placeholder image
         self._placeholder_image = cv2.imread(
             str(Path(__file__).parent / "resources" / "placeholder.jpg")
         )
@@ -29,9 +29,8 @@ class PlaceholderVideoCapture:
     def isOpened(self) -> bool:  # noqa: N802 # camelCase used by OpenCV
         return True
 
-    @staticmethod
-    def set(prop_id: int, value: int) -> None:
-        pass
+    def set(self, prop_id: Any, val: Any) -> int:  # noqa: ANN401
+        return 0
 
 
 class Camera:
@@ -43,6 +42,8 @@ class Camera:
         self.frame: np.ndarray | None = None
         self.fps: list[float] = [0]
         self.fps_window = 100
+        self.stop_video_thread = False
+        self.video_thread: Thread | None = None
 
     def _get_video_capture(
         self, cam_id: int
@@ -84,10 +85,14 @@ class Camera:
         return cams
 
     def start(self, cam_id: int) -> None:
+        if self.video_thread is not None:
+            raise ValueError("Camera needs to be stopped before starting!")
+
         first_cam_id = next(iter(self.available_cameras), None)
         cam_is_available = cam_id in self.available_cameras
 
         if cam_is_available:
+            logger.info("Using camera %s.", cam_id)
             self._cam_id = cam_id
         elif not cam_is_available and first_cam_id is not None:
             logger.warning("Camera %s not available. Fallback to first one.", cam_id)
@@ -97,7 +102,7 @@ class Camera:
             self._cam_id = 99
 
         if self._cam_id == PLACEHOLDER_CAM_ID:
-            logger.info("Using placeholder camera")
+            logger.info("Using placeholder camera.")
             self._capture = PlaceholderVideoCapture()
         else:
             self._capture = cv2.VideoCapture(self._cam_id, cv2.CAP_V4L2)
@@ -105,29 +110,52 @@ class Camera:
         # Set compressed codec for way better performance:
         self._capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))  # type: ignore # FP
 
-        Thread(target=self.update, args=()).start()
+        # Max resolution & FPS. OpenCV automatically selects lower one, if needed:
+        self._capture.set(cv2.CAP_PROP_FPS, 60)  # type: ignore # FP
+        self._capture.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)  # type: ignore # FP
+        self._capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)  # type: ignore # FP
+
+        self.stop_video_thread = False
+        self.video_thread = Thread(target=self.update, args=())
+        self.video_thread.start()
 
     def stop(self) -> None:
+        if self.video_thread is None:
+            return
+
+        self.stop_video_thread = True
+        self.video_thread.join()
+
         if self._capture and self._capture.isOpened():
             self._capture.release()
-            sleep(0.1)
+
+        self.video_thread = None
 
     def get_frame(self) -> np.ndarray | None:
         return self.frame
 
     def update(self) -> None:
+        logger.info("Camera thread started.")
         clock_period = 1 / cv2.getTickFrequency()
         last_tick = cv2.getTickCount()
-        while True:
-            if not self._capture or not self._capture.isOpened():
+        while not self.stop_video_thread:
+            try:
+                if not self._capture:
+                    logger.error("Capture device not ready.")
+                    break
+
+                self.grabbed, self.frame = self._capture.read()
+
+                tick = cv2.getTickCount()
+                fps = 1 / ((tick - last_tick) * clock_period)
+                last_tick = tick
+
+                self.fps.append(fps)
+                if len(self.fps) > self.fps_window:
+                    self.fps.pop(0)
+
+            except cv2.error:  # type: ignore # FP
+                logger.exception("Error in camera update.")
                 break
 
-            self.grabbed, self.frame = self._capture.read()
-
-            tick = cv2.getTickCount()
-            fps = 1 / ((tick - last_tick) * clock_period)
-            last_tick = tick
-
-            self.fps.append(fps)
-            if len(self.fps) > self.fps_window:
-                self.fps.pop(0)
+        logger.info("Camera thread stopped.")
