@@ -130,40 +130,39 @@ class MyHumbleSelf(Gtk.Application):
 
         self.win.present()
 
+    def _create_camera_menu_button(self, cam_id: int) -> Gtk.ToggleButton:
+        image = self._cv2_image_to_gtk_image(self.camera.available_cameras[cam_id])
+        label = Gtk.Label()
+        label.set_text(f"{self.cam_item_prefix}{cam_id}")
+
+        button_box = Gtk.Box()
+        button_box.set_orientation(Gtk.Orientation.VERTICAL)
+        button_box.append(image)
+        button_box.append(label)
+
+        button = Gtk.ToggleButton()
+        button.set_size_request(56, 56)
+        button.set_has_frame(False)
+        button.set_child(button_box)
+        button.connect("toggled", self.on_camera_toggled, cam_id)
+        button.set_css_classes([*button.get_css_classes(), "camera-button"])
+        return button
+
     def init_camera_box(self) -> Gtk.DropDown:
         camera_menu_button = self.builder.get_object("camera_menu_button")
         camera_box = self.builder.get_object("camera_box")
         first_button = None
-        for cam_id, cam_image in self.camera.available_cameras.items():
+        for cam_id in self.camera.available_cameras:
             # Show test image in camera menu only in debug mode:
             if (
-                cam_id == camera.PLACEHOLDER_CAM_ID
+                cam_id == camera.FALLBACK_CAM_ID
                 and logger.getEffectiveLevel() != logging.DEBUG
             ):
                 continue
 
-            with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
-                temp_image = cv2.resize(cam_image, fx=0.20, fy=0.20, dsize=(0, 0))
-                cv2.imwrite(temp_file.name, temp_image)
-                image = Gtk.Image.new_from_file(temp_file.name)
+            button = self._create_camera_menu_button(cam_id)
 
-            label = Gtk.Label()
-            label.set_text(f"{self.cam_item_prefix}{cam_id}")
-
-            button_box = Gtk.Box()
-            button_box.set_orientation(Gtk.Orientation.VERTICAL)
-            button_box.append(image)
-            button_box.append(label)
-
-            button = Gtk.ToggleButton()
-            button.set_size_request(56, 56)
-            button.set_has_frame(False)
-            button.set_child(button_box)
-
-            button.connect("toggled", self.on_camera_toggled, cam_id)
-            button.set_css_classes([*button.get_css_classes(), "camera-button"])
-
-            # Activate stored camera:
+            # Activate button if it was the last active camera
             if cam_id == self.config["main"].getint("last_active_camera", 0):
                 button.set_active(True)
 
@@ -175,7 +174,7 @@ class MyHumbleSelf(Gtk.Application):
 
             camera_box.append(button)
 
-        # Hide camera menu if only one camera is available. Except when in debug mode:
+        # Hide camera menu if only one camera is available, except when in debug mode:
         if (
             len(self.camera.available_cameras) == 1
             and logger.getEffectiveLevel() != logging.DEBUG
@@ -399,6 +398,14 @@ class MyHumbleSelf(Gtk.Application):
             self.fps.pop(0)
 
         return True
+
+    @staticmethod
+    def _cv2_image_to_gtk_image(cv2_image: np.ndarray) -> Gtk.Image:
+        with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
+            temp_image = cv2.resize(cv2_image, fx=0.20, fy=0.20, dsize=(0, 0))
+            cv2.imwrite(temp_file.name, temp_image)
+            image = Gtk.Image.new_from_file(temp_file.name)
+        return image
 
 
 def main() -> None:
