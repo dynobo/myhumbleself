@@ -21,15 +21,15 @@ classifiers = [
   "Intended Audience :: End Users/Desktop",
   "Operating System :: POSIX :: Linux",
 ]
-dependencies = ["PyGObject>=3.42.2", "opencv-python-headless"]
+dependencies = ["PyGObject==3.48.2", "opencv-python-headless==4.10.0.84"]
 optional-dependencies = { dev = [
-  "build",
-  "mypy",
-  "opencv-stubs",
-  "pre-commit",
-  "pytest",
-  "pytest-cov",
-  "ruff",
+  "build==1.2.1",
+  "mypy==1.11.1",
+  "opencv-stubs==0.0.10",
+  "pre-commit==3.8.0",
+  "pytest==8.3.2",
+  "pytest-cov==5.0.0",
+  "ruff==0.5.5",
 ] }
 
 [project.urls]

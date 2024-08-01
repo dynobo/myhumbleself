@@ -12,7 +12,6 @@ CONFIG_FILE = CONFIG_PATH / "myhumbleself.ini"
 logger = logging.getLogger("myhumbleself")
 
 
-# TODO: Simplify by limiting to "main" section
 class WritingConfigParser(ConfigParser):
     def set_persistent(
         self, option: str, value: str | bool | int, section: str = "main"
