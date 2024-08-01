@@ -34,11 +34,8 @@ def init_logger(log_level: str = "WARNING") -> None:
     logging.basicConfig(format=log_format, datefmt=datefmt, level=log_level)
 
 
-# TODO: Replace no-zoom-char in slider with something more common
-
-
 class MyHumbleSelf(Gtk.Application):
-    def __init__(self, application_id: str) -> None:
+    def __init__(self, application_id: str, args: argparse.Namespace) -> None:
         super().__init__(application_id=application_id)
 
         # Top level
@@ -69,7 +66,7 @@ class MyHumbleSelf(Gtk.Application):
 
         # Init values
         self.config = config.load()
-        self.face_detection = face_detection.FaceDetection()
+        self.face_detection = face_detection.FaceDetection(method=args.face_detection)
         self.camera = camera.Camera()
         self.clock_period: float = 1 / cv2.getTickFrequency()
         self.shape: np.ndarray | None = None
@@ -399,6 +396,14 @@ class MyHumbleSelf(Gtk.Application):
 
     @staticmethod
     def _cv2_image_to_gtk_image(cv2_image: np.ndarray) -> Gtk.Image:
+        """Create Gtk.Image from cv2 image via a temporary file.
+
+        Args:
+            cv2_image: OpenCV input image.
+
+        Returns:
+            GTK image widget.
+        """
         with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
             temp_image = cv2.resize(cv2_image, fx=0.20, fy=0.20, dsize=(0, 0))
             cv2.imwrite(temp_file.name, temp_image)
@@ -406,13 +411,22 @@ class MyHumbleSelf(Gtk.Application):
         return image
 
 
-def main() -> None:
-    app = MyHumbleSelf(application_id="com.example.App")
+def main(args: argparse.Namespace) -> None:
+    app = MyHumbleSelf(application_id="com.github.dynobo.myhumbleself", args=args)
     app.run(None)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-f",
+        "--face-detection",
+        type=str,
+        choices=[m.name.lower() for m in face_detection.DetectionModels],
+        help="Model to use for face detection. "
+        "The default 'cnn' is more accurate but requires more compute.",
+        default="cnn",
+    )
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable info logging."
     )
@@ -420,14 +434,15 @@ if __name__ == "__main__":
         "-vv", "--very-verbose", action="store_true", help="Enable debug logging."
     )
 
-    log_level = "WARNING"
+    args = parser.parse_args()
 
-    if parser.parse_args().verbose:
-        log_level = "INFO"
-
-    if parser.parse_args().very_verbose:
+    if args.very_verbose:
         log_level = "DEBUG"
+    elif args.verbose:
+        log_level = "INFO"
+    else:
+        log_level = "WARNING"
 
     init_logger(log_level=log_level)
 
-    main()
+    main(args)
