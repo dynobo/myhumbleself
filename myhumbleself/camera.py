@@ -9,7 +9,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-PLACEHOLDER_CAM_ID = 99
+FALLBACK_CAM_ID = 99
 
 
 class PlaceholderVideoCapture:
@@ -47,7 +47,7 @@ class Camera:
     def _get_video_capture(
         self, cam_id: int
     ) -> cv2.VideoCapture | PlaceholderVideoCapture:
-        if cam_id == PLACEHOLDER_CAM_ID:
+        if cam_id == FALLBACK_CAM_ID:
             return PlaceholderVideoCapture()
 
         return cv2.VideoCapture(cam_id, cv2.CAP_V4L2)
@@ -64,7 +64,7 @@ class Camera:
             IDs of available cameras
         """
         cams = {}
-        cam_ids_to_try = [*range(10), PLACEHOLDER_CAM_ID]
+        cam_ids_to_try = [*range(10), FALLBACK_CAM_ID]
 
         for idx in cam_ids_to_try:
             cap = self._get_video_capture(idx)
@@ -100,7 +100,7 @@ class Camera:
             logger.error("No camera accessible! Is another application using it?")
             self._cam_id = 99
 
-        if self._cam_id == PLACEHOLDER_CAM_ID:
+        if self._cam_id == FALLBACK_CAM_ID:
             logger.info("Using placeholder camera.")
             self._capture = PlaceholderVideoCapture()
         else:
