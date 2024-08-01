@@ -34,34 +34,36 @@ def init_logger(log_level: str = "WARNING") -> None:
 
 
 class MyHumbleSelf(Gtk.Application):
-    # Top level
-    win: Gtk.ApplicationWindow
-    resource: Gio.Resource
-
-    # Webcam widget
-    picture: Gtk.Picture
-
-    # Headerbar widgets
-    follow_face_button: Gtk.ToggleButton
-    shape_box: Gtk.FlowBox
-    camera_box: Gtk.FlowBox
-
-    # Controls Container
-    controls_grid: Gtk.Grid
-    overlay: Gtk.Overlay
-
-    # Controls
-    reset_button: Gtk.Button
-    toggle_controls_button: Gtk.Button
-    right_button: Gtk.Button
-    left_button: Gtk.Button
-    down_button: Gtk.Button
-    up_button: Gtk.Button
-    zoom_in_button: Gtk.Button
-    zoom_out_button: Gtk.Button
-
     def __init__(self, application_id: str) -> None:
         super().__init__(application_id=application_id)
+
+        # Top level
+        self.win: Gtk.ApplicationWindow
+        self.resource: Gio.Resource
+
+        # Webcam widget
+        self.picture: Gtk.Picture
+
+        # Headerbar widgets
+        self.follow_face_button: Gtk.ToggleButton
+        self.shape_box: Gtk.FlowBox
+        self.camera_box: Gtk.FlowBox
+
+        # Controls Container
+        self.controls_grid: Gtk.Grid
+        self.overlay: Gtk.Overlay
+
+        # Controls
+        self.reset_button: Gtk.Button
+        self.toggle_controls_button: Gtk.Button
+        self.right_button: Gtk.Button
+        self.left_button: Gtk.Button
+        self.down_button: Gtk.Button
+        self.up_button: Gtk.Button
+        self.zoom_in_button: Gtk.Button
+        self.zoom_out_button: Gtk.Button
+
+        # Init values
         self.config = config.load()
         self.face_detection = face_detection.FaceDetection()
         self.camera = camera.Camera()
@@ -184,7 +186,6 @@ class MyHumbleSelf(Gtk.Application):
 
     def init_picture(self) -> Gtk.Picture:
         # TODO: Make picture centered and click through transparent areas
-        # TODO: Show overlay on hover to indicate hide/show controls
         picture = self.builder.get_object("picture")
         picture.add_tick_callback(self.draw_image)
 
@@ -304,6 +305,36 @@ class MyHumbleSelf(Gtk.Application):
     def on_shutdown(self, app: Gtk.Application) -> None:
         self.camera.stop()
 
+    def on_toggle_controls_clicked(self, button: Gtk.Button) -> None:
+        self.toggle_presentation_mode()
+
+    def on_picture_enter(
+        self, event: Gtk.EventControllerMotion, x: float, y: float
+    ) -> None:
+        # TODO: Hide overlay after x seconds without mouse movement
+        self.controls_grid.set_visible(True)
+
+    def on_picture_leave(
+        self,
+        event: Gtk.EventControllerMotion,
+    ) -> None:
+        self.controls_grid.set_visible(False)
+
+    def toggle_presentation_mode(self) -> None:
+        self.in_presentation_mode = not self.in_presentation_mode
+        titlebar_height = self.win.get_titlebar().get_height()
+        css_classes = self.win.get_css_classes()
+        if self.in_presentation_mode:
+            css_classes.append("transparent")
+            self.win.set_decorated(False)
+            self.overlay.set_margin_top(titlebar_height)
+        else:
+            css_classes.remove("transparent")
+            self.win.set_decorated(True)
+            self.overlay.set_margin_top(0)
+
+        self.win.set_css_classes(css_classes)
+
     def get_processed_image(self) -> np.ndarray | None:
         image = self.camera.get_frame()
         if image is None:
@@ -333,61 +364,6 @@ class MyHumbleSelf(Gtk.Application):
                 ),
             )
         return image
-
-    def draw_fps(self, image: np.ndarray) -> np.ndarray:
-        font_scale = max(*image.shape) / 500
-        offset_x = int(font_scale * 10)
-        offset_y = int(font_scale * 20)
-        cv2.putText(
-            img=image,
-            text=f"FPS in: {np.mean(self.camera.fps):5.1f}",
-            org=(offset_x, offset_y),
-            fontFace=cv2.FONT_HERSHEY_PLAIN,
-            fontScale=font_scale,
-            color=(0, 255, 0, 255),
-            thickness=2,
-            lineType=cv2.LINE_AA,
-        )
-        cv2.putText(
-            img=image,
-            text=f"FPS out: {self.fps:5.1f}",
-            org=(offset_x, offset_y * 2),
-            fontFace=cv2.FONT_HERSHEY_PLAIN,
-            fontScale=font_scale,
-            color=(0, 255, 0, 255),
-            thickness=2,
-            lineType=cv2.LINE_AA,
-        )
-        return image
-
-    def on_toggle_controls_clicked(self, button: Gtk.Button) -> None:
-        self.toggle_presentation_mode()
-
-    def on_picture_enter(
-        self, event: Gtk.EventControllerMotion, x: float, y: float
-    ) -> None:
-        self.controls_grid.set_visible(True)
-
-    def on_picture_leave(
-        self,
-        event: Gtk.EventControllerMotion,
-    ) -> None:
-        self.controls_grid.set_visible(False)
-
-    def toggle_presentation_mode(self) -> None:
-        self.in_presentation_mode = not self.in_presentation_mode
-        titlebar_height = self.win.get_titlebar().get_height()
-        css_classes = self.win.get_css_classes()
-        if self.in_presentation_mode:
-            css_classes.append("transparent")
-            self.win.set_decorated(False)
-            self.overlay.set_margin_top(titlebar_height)
-        else:
-            css_classes.remove("transparent")
-            self.win.set_decorated(True)
-            self.overlay.set_margin_top(0)
-
-        self.win.set_css_classes(css_classes)
 
     def draw_image(self, widget: Gtk.Widget, idle: Gdk.FrameClock) -> bool:
         tick_before = cv2.getTickCount()
