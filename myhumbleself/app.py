@@ -31,10 +31,13 @@ def init_logger(log_level: str = "WARNING") -> None:
 
 
 # TODO: Replace no-zoom-char in slider with something more common
-# TODO: Fix overlay buttons in bright mode
 
 
 class MyHumbleSelf(Gtk.Application):
+    # Top level
+    win: Gtk.ApplicationWindow
+    resource: Gio.Resource
+
     # Webcam widget
     picture: Gtk.Picture
 
@@ -59,8 +62,6 @@ class MyHumbleSelf(Gtk.Application):
 
     def __init__(self, application_id: str) -> None:
         super().__init__(application_id=application_id)
-        self.win: Gtk.ApplicationWindow
-        self.resource: Gio.Resource
         self.config = config.load()
         self.face_detection = face_detection.FaceDetection()
         self.camera = camera.Camera()
@@ -75,7 +76,6 @@ class MyHumbleSelf(Gtk.Application):
         self.connect("activate", self.on_activate)
         self.connect("shutdown", self.on_shutdown)
 
-    # TODO: split into smaller functions
     def on_activate(self, app: Gtk.Application) -> None:
         self.resource = Gio.resource_load(
             str(Path(__file__).parent / "resources" / "myhumbleself.gresource")
