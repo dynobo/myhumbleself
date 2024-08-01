@@ -14,7 +14,6 @@ PLACEHOLDER_CAM_ID = 99
 
 class PlaceholderVideoCapture:
     def __init__(self) -> None:
-        # TODO: Nicer placeholder image
         self._placeholder_image = cv2.imread(
             str(Path(__file__).parent / "resources" / "placeholder.jpg")
         )
