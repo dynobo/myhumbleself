@@ -23,6 +23,10 @@ RESOURCE_PATH = Path(__file__).parent / "resources"
 logger = logging.getLogger(__name__)
 
 
+def _in_debug_mode() -> bool:
+    return logger.getEffectiveLevel() == logging.DEBUG
+
+
 def init_logger(log_level: str = "WARNING") -> None:
     """Initializes a logger with a specified log level."""
     log_format = "%(asctime)s - %(levelname)-7s - %(name)s:%(lineno)d - %(message)s"
@@ -154,10 +158,7 @@ class MyHumbleSelf(Gtk.Application):
         first_button = None
         for cam_id in self.camera.available_cameras:
             # Show test image in camera menu only in debug mode:
-            if (
-                cam_id == camera.FALLBACK_CAM_ID
-                and logger.getEffectiveLevel() != logging.DEBUG
-            ):
+            if cam_id == camera.FALLBACK_CAM_ID and _in_debug_mode():
                 continue
 
             button = self._create_camera_menu_button(cam_id)
@@ -175,10 +176,7 @@ class MyHumbleSelf(Gtk.Application):
             camera_box.append(button)
 
         # Hide camera menu if only one camera is available, except when in debug mode:
-        if (
-            len(self.camera.available_cameras) == 1
-            and logger.getEffectiveLevel() != logging.DEBUG
-        ):
+        if len(self.camera.available_cameras) == 1 and _in_debug_mode():
             camera_menu_button.set_visible(False)
 
         return camera_box
@@ -385,7 +383,7 @@ class MyHumbleSelf(Gtk.Application):
         texture = Gdk.Texture.new_for_pixbuf(pixbuf)
         widget.set_paintable(texture)
 
-        if logger.getEffectiveLevel() == logging.DEBUG:
+        if _in_debug_mode():
             self.win.set_title(
                 f"MyHumbleSelf - "
                 f"FPS in/out: {np.mean(self.camera.fps):.1f} / {np.mean(self.fps):.1f}"
