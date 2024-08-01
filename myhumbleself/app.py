@@ -24,11 +24,20 @@ logger = logging.getLogger(__name__)
 
 
 def _in_debug_mode() -> bool:
+    """Helper function for commonly used debug mode check.
+
+    Returns:
+        True if logger is set to level DEBUG.
+    """
     return logger.getEffectiveLevel() == logging.DEBUG
 
 
 def init_logger(log_level: str = "WARNING") -> None:
-    """Initializes a logger with a specified log level."""
+    """Initializes a logger with a specified log level.
+
+    Args:
+        log_level: The log level to set.
+    """
     log_format = "%(asctime)s - %(levelname)-7s - %(name)s:%(lineno)d - %(message)s"
     datefmt = "%H:%M:%S"
     logging.basicConfig(format=log_format, datefmt=datefmt, level=log_level)
@@ -80,6 +89,11 @@ class MyHumbleSelf(Gtk.Application):
         self.connect("shutdown", self.on_shutdown)
 
     def on_activate(self, app: Gtk.Application) -> None:
+        """Initialize window on application activation.
+
+        Args:
+            app: Gtk Application.
+        """
         self.resource = Gio.resource_load(
             str(Path(__file__).parent / "resources" / "myhumbleself.gresource")
         )
@@ -132,6 +146,14 @@ class MyHumbleSelf(Gtk.Application):
         self.win.present()
 
     def _create_camera_menu_button(self, cam_id: int) -> Gtk.ToggleButton:
+        """Create a custom button for camera menu, with image and label underneath.
+
+        Args:
+            cam_id: ID of the camera for which the button is created.
+
+        Returns:
+            Button widget.
+        """
         image = self._cv2_image_to_gtk_image(self.camera.available_cameras[cam_id])
         label = Gtk.Label()
         label.set_text(f"{self.cam_item_prefix}{cam_id}")
@@ -149,7 +171,14 @@ class MyHumbleSelf(Gtk.Application):
         button.set_css_classes([*button.get_css_classes(), "camera-button"])
         return button
 
-    def init_camera_box(self) -> Gtk.DropDown:
+    def init_camera_box(self) -> Gtk.FlowBox:
+        """Fill the camera menu's flow box with buttons for each camera.
+
+        Also hide the camera menu if only one camera is available.
+
+        Returns:
+            Widget containing the camera selection buttons.
+        """
         camera_menu_button = self.builder.get_object("camera_menu_button")
         camera_box = self.builder.get_object("camera_box")
         first_button = None
@@ -179,9 +208,13 @@ class MyHumbleSelf(Gtk.Application):
         return camera_box
 
     def init_picture(self) -> Gtk.Picture:
-        # TODO: Make picture centered and click through transparent areas
+        """Setup widget for displaying webcam image.
+
+        Returns:
+            Widget for webcam image.
+        """
         picture = self.builder.get_object("picture")
-        picture.add_tick_callback(self.draw_image)
+        picture.add_tick_callback(self.on_picture_tick)
 
         evk2 = Gtk.EventControllerMotion()
         evk2.connect("leave", self.on_picture_leave)
@@ -190,6 +223,11 @@ class MyHumbleSelf(Gtk.Application):
         return picture
 
     def init_shape_box(self) -> Gtk.FlowBox:
+        """Setup widget for selecting shape overlay.
+
+        Returns:
+            Widget containing shape selection buttons.
+        """
         shape_menu_button = self.builder.get_object("shape_menu_button")
         shape_menu_button.set_icon_name("shapes-symbolic")
 
@@ -221,6 +259,11 @@ class MyHumbleSelf(Gtk.Application):
         return shape_box
 
     def init_follow_face_button(self) -> Gtk.ToggleButton:
+        """Setup widget for toggling face detection mode.
+
+        Returns:
+            Toggle Button.
+        """
         follow_face_button = self.builder.get_object("follow_face_button")
         follow_face_button.set_icon_name("follow-face-symbolic")
         follow_face_button.connect("clicked", self.on_follow_face_clicked)
@@ -229,6 +272,7 @@ class MyHumbleSelf(Gtk.Application):
         return follow_face_button
 
     def init_css(self) -> None:
+        """Apply style from css file to the application."""
         self.css_provider = self.builder.get_object("css_provider")
         Gtk.StyleContext.add_provider_for_display(
             Gdk.Display.get_default(),
@@ -314,10 +358,26 @@ class MyHumbleSelf(Gtk.Application):
     ) -> None:
         self.controls_grid.set_visible(False)
 
+    def on_picture_tick(self, widget: Gtk.Widget, idle: Gdk.FrameClock) -> bool:
+        """Tick callback on picture container.
+
+        Used to update the webcam image on every application tick.
+
+        Args:
+            widget: Tick owner widget.
+            idle: The frame clock for the widget.
+
+        Returns:
+            True if the tick callback should continue to be called.
+        """
+        self.draw_image(widget)
+        return True
+
     def toggle_presentation_mode(self) -> None:
         self.in_presentation_mode = not self.in_presentation_mode
         titlebar_height = self.win.get_titlebar().get_height()
         css_classes = self.win.get_css_classes()
+
         if self.in_presentation_mode:
             css_classes.append("transparent")
             self.win.set_decorated(False)
@@ -359,13 +419,18 @@ class MyHumbleSelf(Gtk.Application):
             )
         return image
 
-    def draw_image(self, widget: Gtk.Widget, idle: Gdk.FrameClock) -> bool:
+    def draw_image(self, widget: Gtk.Widget) -> None:
+        """Draw webcam image on container widget.
+
+        Args:
+            widget: Tick owner widget.
+        """
         tick_before = cv2.getTickCount()
 
         image = self.get_processed_image()
 
         if image is None:
-            return True
+            return
 
         height, width, channels = image.shape
         pixbuf = GdkPixbuf.Pixbuf.new_from_data(
@@ -392,8 +457,6 @@ class MyHumbleSelf(Gtk.Application):
         if len(self.fps) > self.fps_window:
             self.fps.pop(0)
 
-        return True
-
     @staticmethod
     def _cv2_image_to_gtk_image(cv2_image: np.ndarray) -> Gtk.Image:
         """Create Gtk.Image from cv2 image via a temporary file.
@@ -411,12 +474,12 @@ class MyHumbleSelf(Gtk.Application):
         return image
 
 
-def main(args: argparse.Namespace) -> None:
-    app = MyHumbleSelf(application_id="com.github.dynobo.myhumbleself", args=args)
-    app.run(None)
+def _parse_args() -> argparse.Namespace:
+    """Configure and process cli arguments.
 
-
-if __name__ == "__main__":
+    Returns:
+        Parsed arguments.
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-f",
@@ -433,8 +496,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "-vv", "--very-verbose", action="store_true", help="Enable debug logging."
     )
+    return parser.parse_args()
 
-    args = parser.parse_args()
+
+def main() -> None:
+    args = _parse_args()
 
     if args.very_verbose:
         log_level = "DEBUG"
@@ -445,4 +511,9 @@ if __name__ == "__main__":
 
     init_logger(log_level=log_level)
 
-    main(args)
+    app = MyHumbleSelf(application_id="com.github.dynobo.myhumbleself", args=args)
+    app.run(None)
+
+
+if __name__ == "__main__":
+    main()

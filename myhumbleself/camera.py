@@ -34,7 +34,6 @@ class PlaceholderVideoCapture:
 
 class Camera:
     def __init__(self) -> None:
-        # TODO: choose appropriate camera resolution dynamically or downscale image
         self.available_cameras = self._get_available_cameras()
         self._cam_id: int
         self._capture: cv2.VideoCapture | PlaceholderVideoCapture | None = None
