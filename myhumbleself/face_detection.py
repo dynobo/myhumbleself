@@ -1,6 +1,6 @@
 import logging
+from enum import Enum, auto
 from pathlib import Path
-from typing import Literal
 
 import cv2
 import numpy as np
@@ -11,13 +11,18 @@ from myhumbleself.structures import Rect
 logger = logging.getLogger(__name__)
 
 
+class DetectionModels(Enum):
+    CNN = auto()
+    HAARCASCADE = auto()
+
+
 class FaceDetection:
     cnn_onnx = str(
         Path(__file__).parent / "resources" / "face_detection_yunet_2023mar_int8.onnx"
     )
     haarcascade_xml = f"{cv2.data.haarcascades}haarcascade_frontalface_default.xml"  # type: ignore # FP
 
-    def __init__(self) -> None:
+    def __init__(self, method: str) -> None:
         self._history: list[Rect] = []
         self._max_history_len = 20
         self.fluctuation_threshold_factor = 0.03
@@ -26,6 +31,8 @@ class FaceDetection:
 
         self.detector_cnn = cv2.FaceDetectorYN.create(self.cnn_onnx, "", (42, 42))
         self.detector_haarcascade = cv2.CascadeClassifier(self.haarcascade_xml)
+        self.selected_detector = DetectionModels[method.upper()]
+        logger.info("Using detection method: %s", self.selected_detector)
 
     @staticmethod
     def _draw_bounding_box(
@@ -77,14 +84,12 @@ class FaceDetection:
 
         return faces
 
-    def _detect_faces(
-        self, image: np.ndarray, method: Literal["cnn", "haarcascade"] = "cnn"
-    ) -> list[Rect]:
-        if method == "cnn":
+    def _detect_faces(self, image: np.ndarray) -> list[Rect]:
+        if self.selected_detector == DetectionModels.CNN:
             return self._detect_faces_cnn(image)
-        if method == "haarcascade":
+        if self.selected_detector == DetectionModels.HAARCASCADE:
             return self._detect_faces_haarcascade(image)
-        raise ValueError(f"Unknown face detection method: {method}")
+        raise ValueError(f"Unknown face detection method: {self.selected_detector}")
 
     @staticmethod
     def _select_largest_face(faces: list[Rect]) -> Rect | None:
@@ -131,7 +136,7 @@ class FaceDetection:
                 Rect(top=0, left=0, width=image.shape[1] - 1, height=image.shape[0] - 1)
             )
 
-        faces = self._detect_faces(image, method="cnn")
+        faces = self._detect_faces(image)
 
         if logger.getEffectiveLevel() == logging.DEBUG:
             # Draw BBox of all detected raw faces
