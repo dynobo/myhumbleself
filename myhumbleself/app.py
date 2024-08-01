@@ -30,9 +30,8 @@ def init_logger(log_level: str = "WARNING") -> None:
     logging.basicConfig(format=log_format, datefmt=datefmt, level=log_level)
 
 
-# TODO: Support GTK4.6 (in window.ui)
-# TODO: Support Camera inputs
-# TODO: replace no-zoom-char in slider with something more common
+# TODO: Replace no-zoom-char in slider with something more common
+# TODO: Fix overlay buttons in bright mode
 
 
 class MyHumbleSelf(Gtk.Application):
