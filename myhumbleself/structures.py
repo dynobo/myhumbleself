@@ -9,6 +9,14 @@ class Rect:
     height: int
 
     @property
+    def right(self) -> int:
+        return self.left + self.width
+
+    @property
+    def bottom(self) -> int:
+        return self.top + self.height
+
+    @property
     def left_top(self) -> tuple[int, int]:
         return (self.left, self.top)
 

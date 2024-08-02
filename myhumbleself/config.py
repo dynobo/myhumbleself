@@ -36,7 +36,7 @@ def load() -> WritingConfigParser:
     """Load the settings file or create a default settings file if it doesn't exist."""
     config = WritingConfigParser(
         defaults={
-            "zoom_factor": "100",
+            "zoom_factor": "1",
             "follow_face": "True",
             "offset_x": "0",
             "offset_y": "0",

@@ -21,7 +21,7 @@ class FaceDetection:
     )
     haarcascade_xml = f"{cv2.data.haarcascades}haarcascade_frontalface_default.xml"  # type: ignore # FP
 
-    def __init__(self, method: str) -> None:
+    def __init__(self, method: DetectionModels) -> None:
         self._history: list[Rect] = []
         self._max_history_len = 20
         self.fluctuation_threshold_factor = 0.03
@@ -30,7 +30,7 @@ class FaceDetection:
 
         self.detector_cnn = cv2.FaceDetectorYN.create(self.cnn_onnx, "", (42, 42))
         self.detector_haarcascade = cv2.CascadeClassifier(self.haarcascade_xml)
-        self.selected_detector = DetectionModels[method.upper()]
+        self.selected_detector = method
         logger.info("Using detection method: %s", self.selected_detector)
 
     @staticmethod
@@ -128,7 +128,7 @@ class FaceDetection:
         self._last_smoothed_geometry = smoothed_geometry
         return smoothed_geometry
 
-    def get_focus_area(self, image: np.ndarray) -> Rect:
+    def get_face(self, image: np.ndarray) -> Rect:
         if not self._history:
             # Start with full image
             self._history.append(
