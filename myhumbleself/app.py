@@ -84,6 +84,7 @@ class MyHumbleSelf(Gtk.Application):
         self.fps_window = 50
         self.face_coords = face_detection.Rect(0, 0, 1080, 1920)
         self.cam_item_prefix = "/dev/video"
+        self.hide_controls_timeout_id: int | None = None
 
         self.connect("activate", self.on_activate)
         self.connect("shutdown", self.on_shutdown)
@@ -108,7 +109,8 @@ class MyHumbleSelf(Gtk.Application):
         self.win = self.builder.get_object("main_window")
         self.win.set_application(self)
 
-        self.picture = self.init_picture()
+        picture = self.builder.get_object("picture")
+        picture.add_tick_callback(self.on_picture_tick)
 
         self.shape_box = self.init_shape_box()
         self.follow_face_button = self.init_follow_face_button()
@@ -206,21 +208,6 @@ class MyHumbleSelf(Gtk.Application):
             camera_menu_button.set_visible(False)
 
         return camera_box
-
-    def init_picture(self) -> Gtk.Picture:
-        """Setup widget for displaying webcam image.
-
-        Returns:
-            Widget for webcam image.
-        """
-        picture = self.builder.get_object("picture")
-        picture.add_tick_callback(self.on_picture_tick)
-
-        evk2 = Gtk.EventControllerMotion()
-        evk2.connect("leave", self.on_picture_leave)
-        evk2.connect("motion", self.on_picture_enter)
-        picture.add_controller(evk2)
-        return picture
 
     def init_shape_box(self) -> Gtk.FlowBox:
         """Setup widget for selecting shape overlay.
@@ -345,18 +332,6 @@ class MyHumbleSelf(Gtk.Application):
 
     def on_toggle_controls_clicked(self, button: Gtk.Button) -> None:
         self.toggle_presentation_mode()
-
-    def on_picture_enter(
-        self, event: Gtk.EventControllerMotion, x: float, y: float
-    ) -> None:
-        # TODO: Hide overlay after x seconds without mouse movement
-        self.controls_grid.set_visible(True)
-
-    def on_picture_leave(
-        self,
-        event: Gtk.EventControllerMotion,
-    ) -> None:
-        self.controls_grid.set_visible(False)
 
     def on_picture_tick(self, widget: Gtk.Widget, idle: Gdk.FrameClock) -> bool:
         """Tick callback on picture container.

@@ -19,11 +19,20 @@ window.transparent.background {
   background: unset;
 }
 
+.overlay {
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.overlay:hover {
+  opacity: 1;
+}
+
 .overlay button {
   border-radius: 16px;
   filter: invert(1) contrast(150%);
   opacity: 0.5;
-  transition: opacity 3s;
+  transition: opacity 0.3s;
   border: 0px;
 }
 
