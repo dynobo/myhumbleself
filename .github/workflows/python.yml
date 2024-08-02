@@ -11,14 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install hatch
-        run: pipx install hatch
-
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-
+          python-version: "3.12"
       - name: Install system deps
         run: |
           sudo apt-get update
@@ -27,10 +22,12 @@ jobs:
              libcairo2-dev \
              python3-gi \
              gobject-introspection \
-             libgtk-4-dev
-
-      - name: Run project checks
-        run: hatch run check
+             libgtk-4-dev \
+             libxml2-utils  # required for pre-commit hooks
+      - name: Install python deps
+        run: pip install '.[dev]'
+      - name: Run tests
+        run: pre-commit run --all-files
 
   publish:
     name: Build & Publish
@@ -46,14 +43,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install hatch
-        run: pipx install hatch
-
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-
+          python-version: "3.12"
       - name: Install system deps
         run: |
           sudo apt-get update
@@ -63,12 +55,15 @@ jobs:
              python3-gi \
              gobject-introspection \
              libgtk-4-dev
-
-      - name: Build Python package
-        run: hatch build
-
+      - name: Install python deps
+        run: pip install '.[dev]'
+      - name: Build
+        run: python -m build
       - name: Publish to PyPi
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
           print-hash: true
+      - uses: ncipollo/release-action@v1
+        with:
+          body: See [CHANGELOG.md](https://github.com/dynobo/myhumbleself/blob/main/CHANGELOG.md) for details.

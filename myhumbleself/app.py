@@ -184,7 +184,7 @@ class MyHumbleSelf(Gtk.Application):
         first_button = None
         for cam_id in self.camera.available_cameras:
             # Show test image in camera menu only in debug mode:
-            if cam_id == camera.FALLBACK_CAM_ID and _in_debug_mode():
+            if cam_id == camera.FALLBACK_CAM_ID and not _in_debug_mode():
                 continue
 
             button = self._create_camera_menu_button(cam_id)
