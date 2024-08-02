@@ -1,0 +1,5 @@
+File 'face_detection_yunet_2023mar_int8.onnx':
+
+- Source: https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet
+- License: MIT,
+  https://github.com/opencv/opencv_zoo/blob/main/models/face_detection_yunet/LICENSE
