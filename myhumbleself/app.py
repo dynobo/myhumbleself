@@ -75,16 +75,22 @@ class MyHumbleSelf(Gtk.Application):
 
         # Init values
         self.config = config.load()
-        self.face_detection = face_detection.FaceDetection(method=args.face_detection)
         self.camera = camera.Camera()
         self.clock_period: float = 1 / cv2.getTickFrequency()
-        self.shape: np.ndarray | None = None
         self.in_presentation_mode = False
         self.fps: list[float] = [0]
         self.fps_window = 50
-        self.face_coords = face_detection.Rect(0, 0, 1080, 1920)
         self.cam_item_prefix = "/dev/video"
         self.hide_controls_timeout_id: int | None = None
+        self.image_processor = processing.ImageProcessor(
+            face_detection_model=face_detection.DetectionModels[
+                args.face_detection.upper()
+            ],
+            get_zoom_factor=lambda: self.config["main"].getfloat("zoom_factor", 1),
+            get_offset_x=lambda: self.config["main"].getint("offset_x", 0),
+            get_offset_y=lambda: self.config["main"].getint("offset_y", 0),
+            get_follow_face=lambda: self.config["main"].getboolean("follow_face", True),
+        )
 
         self.connect("activate", self.on_activate)
         self.connect("shutdown", self.on_shutdown)
@@ -272,6 +278,7 @@ class MyHumbleSelf(Gtk.Application):
 
     def on_follow_face_clicked(self, button: Gtk.ToggleButton) -> None:
         self.config.set_persistent("follow_face", button.get_active())
+
         if button.get_active():
             button.set_tooltip_text("Do not follow face")
             button.set_icon_name("follow-face-off-symbolic")
@@ -284,13 +291,13 @@ class MyHumbleSelf(Gtk.Application):
             return
 
         if "99" in shape:
-            self.shape = None
+            self.image_processor.shape = None
         else:
             shape_png = self.resource.lookup_data(
                 f"/com/github/dynobo/myhumbleself/shapes/{shape}",
                 Gio.ResourceLookupFlags.NONE,
             ).get_data()
-            self.shape = cv2.imdecode(
+            self.image_processor.shape = cv2.imdecode(
                 np.frombuffer(shape_png, dtype=np.uint8), cv2.IMREAD_COLOR
             )
 
@@ -306,26 +313,31 @@ class MyHumbleSelf(Gtk.Application):
     def on_reset_clicked(self, button: Gtk.Button) -> None:
         self.config.set_persistent("offset_x", 0)
         self.config.set_persistent("offset_y", 0)
-        self.config.set_persistent("zoom_factor", 100)
+        self.config.set_persistent("zoom_factor", 1)
 
     def on_move_clicked(self, button: Gtk.Button, factor_x: int, factor_y: int) -> None:
-        step_size = 20
         self.config.set_persistent(
             "offset_x",
-            self.config["main"].getint("offset_x", 0) + factor_x * step_size,
+            self.config["main"].getint("offset_x", 0)
+            + factor_x * self.image_processor.move_step,
         )
         self.config.set_persistent(
             "offset_y",
-            self.config["main"].getint("offset_y", 0) + factor_y * step_size,
+            self.config["main"].getint("offset_y", 0)
+            + factor_y * self.image_processor.move_step,
         )
 
     def on_zoom_in(self, btn: Gtk.Button) -> None:
-        zoom = self.config["main"].getint("zoom_factor", 100)
-        self.config.set_persistent("zoom_factor", int(zoom + 10 * 1))
+        zoom = self.config["main"].getfloat("zoom_factor", 1)
+        self.config.set_persistent(
+            "zoom_factor", zoom + self.image_processor.zoom_step * 1
+        )
 
     def on_zoom_out(self, btn: Gtk.Button) -> None:
-        zoom = self.config["main"].getint("zoom_factor", 100)
-        self.config.set_persistent("zoom_factor", int(zoom + 10 * -1))
+        zoom = self.config["main"].getfloat("zoom_factor", 1)
+        self.config.set_persistent(
+            "zoom_factor", zoom + self.image_processor.zoom_step * -1
+        )
 
     def on_shutdown(self, app: Gtk.Application) -> None:
         self.camera.stop()
@@ -364,45 +376,24 @@ class MyHumbleSelf(Gtk.Application):
 
         self.win.set_css_classes(css_classes)
 
-    def get_processed_image(self) -> np.ndarray | None:
-        image = self.camera.get_frame()
-        if image is None:
-            return None
-
-        if self.config["main"].getboolean("follow_face"):
-            face_coords = self.face_detection.get_focus_area(image)
-        else:
-            base_size = min(*image.shape[:2]) // 3
-            face_coords = face_detection.Rect(
-                top=(image.shape[0] - base_size) // 2,
-                left=(image.shape[1] - base_size) // 2,
-                width=base_size,
-                height=base_size,
-            )
-
-        image = processing.convert_colorspace(image)
-        if self.shape is not None:
-            image = processing.crop_to_shape(
-                image=image,
-                shape=self.shape,
-                face=face_coords,
-                zoom_factor=self.config["main"].getint("zoom_factor", 100) / 100,
-                offset_xy=(
-                    self.config["main"].getint("offset_x", 0),
-                    self.config["main"].getint("offset_y", 0),
-                ),
-            )
-        return image
-
     def draw_image(self, widget: Gtk.Widget) -> None:
         """Draw webcam image on container widget.
 
         Args:
             widget: Tick owner widget.
         """
+        if not self.image_processor:
+            return
+
         tick_before = cv2.getTickCount()
 
-        image = self.get_processed_image()
+        frame = self.camera.get_frame()
+        image = self.image_processor.process_frame(frame)
+
+        self.left_button.set_sensitive(self.image_processor.can_move_left)
+        self.right_button.set_sensitive(self.image_processor.can_move_right)
+        self.up_button.set_sensitive(self.image_processor.can_move_up)
+        self.down_button.set_sensitive(self.image_processor.can_move_down)
 
         if image is None:
             return
