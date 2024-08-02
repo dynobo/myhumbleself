@@ -85,7 +85,6 @@
             <property name="margin-top">10</property>
             <property name="orientation">vertical</property>
             <property name="row-homogeneous">True</property>
-            <property name="visible">False</property>
             <child>
               <object class="GtkBox">
                 <property name="css-classes">center-box</property>

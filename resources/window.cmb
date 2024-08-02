@@ -60,7 +60,6 @@
 	(1,91,"GtkWidget","margin-end","10",None,None,None,None,None,None,None,None,None),
 	(1,91,"GtkWidget","margin-start","10",None,None,None,None,None,None,None,None,None),
 	(1,91,"GtkWidget","margin-top","10",None,None,None,None,None,None,None,None,None),
-	(1,91,"GtkWidget","visible","False",None,None,None,None,None,None,None,None,None),
 	(1,92,"GtkWidget","css-classes","center-box",None,None,None,None,None,None,None,None,None),
 	(1,92,"GtkWidget","halign","center",None,None,None,None,None,None,None,None,None),
 	(1,92,"GtkWidget","valign","center",None,None,None,None,None,None,None,None,None),
