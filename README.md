@@ -1,6 +1,6 @@
 # MyHumbleSelf
 
-**_Utility to display webcam image for presentation or screencasts on Linux._**
+**_Utility to display webcam image for presentations or screencasts on Linux._**
 
 <p align="center"><br>
 <img alt="Tests passing" src="https://github.com/dynobo/myhumbleself/workflows/Test/badge.svg">

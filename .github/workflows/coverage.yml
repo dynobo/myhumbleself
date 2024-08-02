@@ -12,14 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install hatch
-        run: pipx install hatch
-
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-
+          python-version: "3.12"
       - name: Install system deps
         run: |
           sudo apt-get update
@@ -29,11 +24,9 @@ jobs:
              python3-gi \
              gobject-introspection \
              libgtk-3-dev
-
-      - name: Run pytest
-        run: hatch run test
-
+      - name: Install python deps
+        run: pip install '.[dev]'
+      - name: Run tests
+        run: pytest
       - name: Coveralls
-        run: hatch run coveralls
-        env:
-          COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_TOKEN }}
+        uses: coverallsapp/github-action@v2
