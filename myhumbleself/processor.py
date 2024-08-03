@@ -158,6 +158,7 @@ class FrameProcessor:
 
         padding = self.padding
 
+        # Sanitize focus area to stay within image bounds
         area = structures.Rect(
             top=max(0, focus_area.top - padding + self.get_offset_y()),
             left=max(0, focus_area.left - padding + self.get_offset_x()),

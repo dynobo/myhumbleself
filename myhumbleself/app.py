@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 import tempfile
+import time
 from pathlib import Path
 
 # Hide warnings show during search for cameras
@@ -67,7 +68,6 @@ class MyHumbleSelf(Gtk.Application):
         # Init values
         self.config = config.load()
         self.camera = camera.Camera()
-        self.clock_period: float = 1 / cv2.getTickFrequency()
         self.in_presentation_mode = False
         self.fps: list[float] = [0]
         self.fps_window = 50
@@ -253,11 +253,16 @@ class MyHumbleSelf(Gtk.Application):
         Returns:
             Toggle Button.
         """
+        is_follow_face = self.config["main"].getboolean("follow_face")
         follow_face_button = self.builder.get_object("follow_face_button")
-        follow_face_button.set_icon_name("follow-face-symbolic")
+        follow_face_button.set_active(is_follow_face)
+        follow_face_button.set_tooltip_text(
+            "Do not follow face" if is_follow_face else "Follow face"
+        )
+        follow_face_button.set_icon_name(
+            "follow-face-off-symbolic" if is_follow_face else "follow-face-symbolic"
+        )
         follow_face_button.connect("clicked", self.on_follow_face_clicked)
-        follow_face_button.set_active(self.config["main"].getboolean("follow_face"))
-        self.on_follow_face_clicked(follow_face_button)
         return follow_face_button
 
     def init_css(self) -> None:
@@ -383,7 +388,7 @@ class MyHumbleSelf(Gtk.Application):
         if not self.frame_processor:
             return
 
-        tick_before = cv2.getTickCount()
+        tick_before = time.perf_counter()
 
         frame = self.camera.get_frame()
         if frame is None:
@@ -417,8 +422,8 @@ class MyHumbleSelf(Gtk.Application):
                 f"FPS in/out: {np.mean(self.camera.fps):.1f} / {np.mean(self.fps):.1f}"
             )
 
-        tick_after = cv2.getTickCount()
-        fps = 1 / ((tick_after - tick_before) * self.clock_period)
+        tick_after = time.perf_counter()
+        fps = 1 / (tick_after - tick_before)
         self.fps.append(fps)
         if len(self.fps) > self.fps_window:
             self.fps.pop(0)
