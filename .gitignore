@@ -2,7 +2,7 @@
 .vscode
 .envrc
 .ruff_cache
-
+pydeps.png
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
