@@ -54,3 +54,9 @@ repos:
         language: system
         entry: pydeps myhumbleself --max-bacon=2 -o=pydeps.png -T=png
         pass_filenames: false
+      - id: code2flow
+        name: code2flow
+        stages: [commit]
+        language: system
+        entry: code2flow myhumbleself --no-trimming --exclude-function=(global) --output=code2flow.png
+        pass_filenames: false

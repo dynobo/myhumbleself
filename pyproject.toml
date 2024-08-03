@@ -34,6 +34,7 @@ optional-dependencies = { dev = [
   "pytest-cov==5.0.0",
   "ruff==0.5.5",
   "pydeps==1.12.20",
+  "code2flow==2.5.1",
 ] }
 
 [project.urls]

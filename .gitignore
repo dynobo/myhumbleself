@@ -3,6 +3,8 @@
 .envrc
 .ruff_cache
 pydeps.png
+code2flow.png
+code2flow.gv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
