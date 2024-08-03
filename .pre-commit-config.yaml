@@ -48,3 +48,9 @@ repos:
         language: system
         entry: pytest
         pass_filenames: false
+      - id: pydeps
+        name: pydeps
+        stages: [commit]
+        language: system
+        entry: pydeps myhumbleself --max-bacon=2 -o=pydeps.png -T=png
+        pass_filenames: false
