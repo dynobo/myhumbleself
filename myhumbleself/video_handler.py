@@ -1,5 +1,5 @@
 import logging
-from collections.abc import Callable
+from copy import deepcopy
 
 import cv2
 import numpy as np
@@ -13,37 +13,35 @@ def _convert_colorspace(frame: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
 
 
-class FrameProcessor:
+class VideoHandler:
     def __init__(
         self,
         face_detection_model: face_detection.DetectionModels,
-        get_zoom_factor: Callable,
-        get_offset_x: Callable,
-        get_offset_y: Callable,
-        get_follow_face: Callable,
+        zoom_factor: float,
+        offset_x: int,
+        offset_y: int,
+        follow_face: bool,
     ) -> None:
         self.frame: np.ndarray | None = None
         self.frame_size: tuple[int, int] | None = None
         self.shape: np.ndarray | None = None
 
         self.face_detection = face_detection.FaceDetection(method=face_detection_model)
+        self._camera = camera.Camera()
 
-        self.get_zoom_factor = get_zoom_factor
-        self.get_offset_x = get_offset_x
-        self.get_offset_y = get_offset_y
-        self.get_follow_face = get_follow_face
-        self.zoom_step = 0.1
-        self.move_step = 20
+        self.zoom_factor = zoom_factor
+        self.offset_x = offset_x
+        self.offset_y = offset_y
+        self.follow_face = follow_face
+        self.ZOOM_STEP = 0.1
+        self.MOVE_STEP = 20
 
         self.focus_area: structures.Rect | None = None
         self.face_area: structures.Rect | None = None
 
-        self.camera = camera.Camera()
-
         self.debug_mode = False
 
-    @property
-    def padding(self) -> int:
+    def _get_padding(self) -> int:
         if not self.focus_area:
             return 0
 
@@ -52,7 +50,7 @@ class FrameProcessor:
             if self.focus_area
             else 0
         )
-        padding = int(-base_pad + base_pad / self.get_zoom_factor() / 0.5)
+        padding = int(-base_pad + base_pad / self.zoom_factor / 0.5)
 
         return padding
 
@@ -66,7 +64,7 @@ class FrameProcessor:
             return True
 
         next_left = (
-            self.focus_area.left - self.padding + self.get_offset_x() - self.move_step
+            self.focus_area.left - self._get_padding() + self.offset_x - self.MOVE_STEP
         )
         return next_left > 0
 
@@ -79,7 +77,7 @@ class FrameProcessor:
             return True
 
         next_right = (
-            self.focus_area.right + self.padding + self.get_offset_x() + self.move_step
+            self.focus_area.right + self._get_padding() + self.offset_x + self.MOVE_STEP
         )
         return next_right < self.frame.shape[1]
 
@@ -89,7 +87,7 @@ class FrameProcessor:
             return True
 
         next_top = (
-            self.focus_area.top - self.padding + self.get_offset_y() - self.move_step
+            self.focus_area.top - self._get_padding() + self.offset_y - self.MOVE_STEP
         )
         return next_top > 0
 
@@ -102,11 +100,35 @@ class FrameProcessor:
             return True
 
         next_top = (
-            self.focus_area.bottom + self.padding + self.get_offset_y() + self.move_step
+            self.focus_area.bottom
+            + self._get_padding()
+            + self.offset_y
+            + self.MOVE_STEP
         )
         return next_top > self.frame.shape[0]
 
-    def get_focus_area(
+    def set_camera(self, cam_id: int | None) -> None:
+        self._camera.stop()
+        if cam_id is not None:
+            self._camera.start(cam_id)
+
+    def set_shape(self, png_buffer: bytes) -> None:
+        self.shape = cv2.imdecode(
+            np.frombuffer(png_buffer, dtype=np.uint8), cv2.IMREAD_COLOR
+        )
+
+    def set_debug_mode(self, on: bool) -> None:
+        self.debug_mode = on
+        self.face_detection.debug_mode = on
+
+    def get_available_cameras(self) -> dict[int, np.ndarray]:
+        # Show test image in camera menu only in debug mode:
+        cams = deepcopy(self._camera.available_cameras)
+        if not self.debug_mode:
+            del cams[self._camera.FALLBACK_CAM_ID]
+        return cams
+
+    def _get_focus_area(
         self, face_area: structures.Rect | None, frame_size: tuple[int, int]
     ) -> structures.Rect:
         if face_area is not None:
@@ -122,8 +144,8 @@ class FrameProcessor:
 
         return focus_area
 
-    def get_process_frame(self) -> np.ndarray | None:
-        self.frame = self.camera.get_frame()
+    def get_frame(self) -> np.ndarray | None:
+        self.frame = self._camera.get_frame()
 
         if self.frame is None:
             logger.debug("Frame is None, skip processing.")
@@ -132,24 +154,24 @@ class FrameProcessor:
             logger.debug("Shape is None, skip processing.")
             return None
 
-        if self.get_follow_face():
+        if self.follow_face:
             self.face_area = self.face_detection.get_face(self.frame)
 
         frame_size = (self.frame.shape[0], self.frame.shape[1])
-        self.focus_area = self.get_focus_area(
+        self.focus_area = self._get_focus_area(
             face_area=self.face_area, frame_size=frame_size
         )
 
         image = _convert_colorspace(self.frame)
 
-        image = self.crop_to_shape(
+        image = self._crop_to_shape(
             image=image,
             shape=self.shape,
             focus_area=self.focus_area,
         )
         return image
 
-    def crop_to_shape(
+    def _crop_to_shape(
         self,
         image: np.ndarray,
         shape: np.ndarray,
@@ -158,12 +180,12 @@ class FrameProcessor:
         shape_height, shape_width, _ = shape.shape
         image_height, image_width, _ = image.shape
 
-        padding = self.padding
+        padding = self._get_padding()
 
         # Sanitize focus area to stay within image bounds
         area = structures.Rect(
-            top=max(0, focus_area.top - padding + self.get_offset_y()),
-            left=max(0, focus_area.left - padding + self.get_offset_x()),
+            top=max(0, focus_area.top - padding + self.offset_y),
+            left=max(0, focus_area.left - padding + self.offset_x),
             width=min(image_width, focus_area.width + padding * 2),
             height=min(image_height, focus_area.height + padding * 2),
         )

@@ -24,12 +24,12 @@ class FaceDetection:
     def __init__(self, method: DetectionModels) -> None:
         self._history: list[Rect] = []
         self._max_history_len = 20
+        self._last_smoothed_geometry: Rect | None = None
+        self._detector_cnn = cv2.FaceDetectorYN.create(self.cnn_onnx, "", (42, 42))
+        self._detector_haarcascade = cv2.CascadeClassifier(self.haarcascade_xml)
+
         self.fluctuation_threshold_factor = 0.03
         self.follow_face_speed_factor = 0.2
-        self._last_smoothed_geometry: Rect | None = None
-
-        self.detector_cnn = cv2.FaceDetectorYN.create(self.cnn_onnx, "", (42, 42))
-        self.detector_haarcascade = cv2.CascadeClassifier(self.haarcascade_xml)
         self.selected_detector = method
         self.debug_mode = False
         logger.info("Using detection method: %s", self.selected_detector)
@@ -48,7 +48,7 @@ class FaceDetection:
 
     def _detect_faces_haarcascade(self, image: np.ndarray) -> list[Rect]:
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        face_detections = self.detector_haarcascade.detectMultiScale(
+        face_detections = self._detector_haarcascade.detectMultiScale(
             gray_image, scaleFactor=1.1, minNeighbors=5, minSize=(40, 40)
         )
         faces = [
@@ -69,8 +69,8 @@ class FaceDetection:
         )
 
         # Detect faces
-        self.detector_cnn.setInputSize((image.shape[1], image.shape[0]))
-        face_detections = self.detector_cnn.detect(image)
+        self._detector_cnn.setInputSize((image.shape[1], image.shape[0]))
+        face_detections = self._detector_cnn.detect(image)
 
         # Convert to Rect objects and scale back up
         faces: list[Rect] = []
