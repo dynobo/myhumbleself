@@ -12,7 +12,7 @@ import cv2
 import gi
 import numpy as np
 
-from myhumbleself import config, face_detection, processor
+from myhumbleself import config, face_detection, video_handler
 
 gi.require_version("Gdk", "4.0")
 gi.require_version("Gtk", "4.0")
@@ -72,15 +72,15 @@ class MyHumbleSelf(Gtk.Application):
         self.fps_window = 50
         self.cam_item_prefix = "/dev/video"
         self.hide_controls_timeout_id: int | None = None
-        self.debug_mode = logger.getEffectiveLevel() == logging.DEBUG
-        self.frame_processor = processor.FrameProcessor(
+        self.loglevel_debug = logger.getEffectiveLevel() == logging.DEBUG
+        self.video_handler = video_handler.VideoHandler(
             face_detection_model=face_detection.DetectionModels[
                 args.face_detection.upper()
             ],
-            get_zoom_factor=lambda: self.config["main"].getfloat("zoom_factor", 1),
-            get_offset_x=lambda: self.config["main"].getint("offset_x", 0),
-            get_offset_y=lambda: self.config["main"].getint("offset_y", 0),
-            get_follow_face=lambda: self.config["main"].getboolean("follow_face", True),
+            zoom_factor=self.config["main"].getfloat("zoom_factor", 1),
+            offset_x=self.config["main"].getint("offset_x", 0),
+            offset_y=self.config["main"].getint("offset_y", 0),
+            follow_face=self.config["main"].getboolean("follow_face", True),
         )
 
         self.connect("activate", self.on_activate)
@@ -113,7 +113,7 @@ class MyHumbleSelf(Gtk.Application):
         self.follow_face_button = self.init_follow_face_button()
         self.camera_box = self.init_camera_box()
         self.debug_mode_button = self.builder.get_object("debug_mode_button")
-        if self.debug_mode:
+        if self.loglevel_debug:
             self.debug_mode_button.set_visible(True)
             self.debug_mode_button.connect("clicked", self.on_toggle_debug_position)
 
@@ -158,7 +158,7 @@ class MyHumbleSelf(Gtk.Application):
             Button widget.
         """
         image = self._cv2_image_to_gtk_image(
-            self.frame_processor.camera.available_cameras[cam_id]
+            self.video_handler.get_available_cameras()[cam_id]
         )
         label = Gtk.Label()
         label.set_text(f"{self.cam_item_prefix}{cam_id}")
@@ -186,15 +186,9 @@ class MyHumbleSelf(Gtk.Application):
         """
         camera_menu_button = self.builder.get_object("camera_menu_button")
         camera_box = self.builder.get_object("camera_box")
+        camera_box.remove_all()
         first_button = None
-        for cam_id in self.frame_processor.camera.available_cameras:
-            # Show test image in camera menu only in debug mode:
-            if (
-                cam_id == self.frame_processor.camera.FALLBACK_CAM_ID
-                and not self.debug_mode
-            ):
-                continue
-
+        for cam_id in self.video_handler.get_available_cameras():
             button = self._create_camera_menu_button(cam_id)
 
             # Activate button if it was the last active camera
@@ -210,8 +204,10 @@ class MyHumbleSelf(Gtk.Application):
             camera_box.append(button)
 
         # Hide camera menu if only one camera is available, except when in debug mode:
-        if len(self.frame_processor.camera.available_cameras) == 1 and self.debug_mode:
-            camera_menu_button.set_visible(False)
+        is_visible = (
+            len(self.video_handler.get_available_cameras()) > 1 or self.loglevel_debug
+        )
+        camera_menu_button.set_visible(is_visible)
 
         return camera_box
 
@@ -299,16 +295,13 @@ class MyHumbleSelf(Gtk.Application):
             f"/com/github/dynobo/myhumbleself/shapes/{shape}",
             Gio.ResourceLookupFlags.NONE,
         ).get_data()
-        self.frame_processor.shape = cv2.imdecode(
-            np.frombuffer(shape_png, dtype=np.uint8), cv2.IMREAD_COLOR
-        )
+        self.video_handler.set_shape(shape_png)
         self.config.set_persistent("shape", shape)
 
     def on_camera_toggled(self, button: Gtk.ToggleButton, cam_id: int) -> None:
         if not button.get_active():
             return
-        self.frame_processor.camera.stop()
-        self.frame_processor.camera.start(cam_id)
+        self.video_handler.set_camera(cam_id)
         self.config.set_persistent("last_active_camera", cam_id)
 
     def on_reset_clicked(self, button: Gtk.Button) -> None:
@@ -320,37 +313,37 @@ class MyHumbleSelf(Gtk.Application):
         self.config.set_persistent(
             "offset_x",
             self.config["main"].getint("offset_x", 0)
-            + factor_x * self.frame_processor.move_step,
+            + factor_x * self.video_handler.MOVE_STEP,
         )
         self.config.set_persistent(
             "offset_y",
             self.config["main"].getint("offset_y", 0)
-            + factor_y * self.frame_processor.move_step,
+            + factor_y * self.video_handler.MOVE_STEP,
         )
 
     def on_zoom_in(self, btn: Gtk.Button) -> None:
         zoom = self.config["main"].getfloat("zoom_factor", 1)
         self.config.set_persistent(
-            "zoom_factor", zoom + self.frame_processor.zoom_step * 1
+            "zoom_factor", zoom + self.video_handler.ZOOM_STEP * 1
         )
 
     def on_zoom_out(self, btn: Gtk.Button) -> None:
         zoom = self.config["main"].getfloat("zoom_factor", 1)
         self.config.set_persistent(
-            "zoom_factor", zoom + self.frame_processor.zoom_step * -1
+            "zoom_factor", zoom + self.video_handler.ZOOM_STEP * -1
         )
 
     def on_shutdown(self, app: Gtk.Application) -> None:
-        self.frame_processor.camera.stop()
+        self.video_handler.set_camera(None)
 
     def on_toggle_controls_clicked(self, button: Gtk.Button) -> None:
         self.toggle_presentation_mode()
 
     def on_toggle_debug_position(self, button: Gtk.Button) -> None:
         debug_mode = button.get_active()
-        self.debug_mode = debug_mode
-        self.frame_processor.debug_mode = debug_mode
-        self.frame_processor.face_detection.debug_mode = debug_mode
+        self.video_handler.set_debug_mode(on=debug_mode)
+        # Re-init camera box to show/hide static test camera
+        self.init_camera_box()
 
     def on_picture_tick(self, widget: Gtk.Widget, idle: Gdk.FrameClock) -> bool:
         """Tick callback on picture container.
@@ -389,19 +382,19 @@ class MyHumbleSelf(Gtk.Application):
         Args:
             widget: Tick owner widget.
         """
-        if not self.frame_processor:
+        if not self.video_handler:
             return
 
         tick_before = time.perf_counter()
 
-        image = self.frame_processor.get_process_frame()
+        image = self.video_handler.get_frame()
         if image is None:
             return
 
-        self.left_button.set_sensitive(self.frame_processor.can_move_left)
-        self.right_button.set_sensitive(self.frame_processor.can_move_right)
-        self.up_button.set_sensitive(self.frame_processor.can_move_up)
-        self.down_button.set_sensitive(self.frame_processor.can_move_down)
+        self.left_button.set_sensitive(self.video_handler.can_move_left)
+        self.right_button.set_sensitive(self.video_handler.can_move_right)
+        self.up_button.set_sensitive(self.video_handler.can_move_up)
+        self.down_button.set_sensitive(self.video_handler.can_move_down)
 
         height, width, channels = image.shape
         pixbuf = GdkPixbuf.Pixbuf.new_from_data(
@@ -419,7 +412,7 @@ class MyHumbleSelf(Gtk.Application):
         if logger.getEffectiveLevel() <= logging.INFO:
             self.win.set_title(
                 f"MyHumbleSelf - "
-                f"FPS in/out: {np.mean(self.frame_processor.camera.fps):.1f} "
+                f"FPS in/out: {np.mean(self.video_handler._camera.fps):.1f} "
                 f"/ {np.mean(self.fps):.1f}"
             )
 
