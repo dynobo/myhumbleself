@@ -4,7 +4,7 @@ from collections.abc import Callable
 import cv2
 import numpy as np
 
-from myhumbleself import face_detection, structures
+from myhumbleself import camera, face_detection, structures
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,8 @@ class FrameProcessor:
 
         self.focus_area: structures.Rect | None = None
         self.face_area: structures.Rect | None = None
+
+        self.camera = camera.Camera()
 
         self.debug_mode = False
 
@@ -120,8 +122,8 @@ class FrameProcessor:
 
         return focus_area
 
-    def process_frame(self, frame: np.ndarray) -> np.ndarray | None:
-        self.frame = frame
+    def get_process_frame(self) -> np.ndarray | None:
+        self.frame = self.camera.get_frame()
 
         if self.frame is None:
             logger.debug("Frame is None, skip processing.")

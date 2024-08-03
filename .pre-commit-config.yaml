@@ -52,7 +52,7 @@ repos:
         name: pydeps
         stages: [commit]
         language: system
-        entry: pydeps myhumbleself --max-bacon=2 -o=pydeps.png -T=png
+        entry: pydeps myhumbleself --max-bacon=2 -o=pydeps.png -T=png --no-show
         pass_filenames: false
       - id: code2flow
         name: code2flow
