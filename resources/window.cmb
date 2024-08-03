@@ -15,7 +15,6 @@
 	(1,82,"GtkToggleButton","follow_face_button",81,None,"start",None,None,None,None),
 	(1,83,"GtkMenuButton","shape_menu_button",81,None,"start",None,1,None,None),
 	(1,84,"GtkPopover",None,83,None,None,None,None,None,None),
-	(1,88,"GtkButton","about_button",81,None,"end",None,4,None,None),
 	(1,89,"GtkOverlay","overlay",2,None,None,None,1,None,None),
 	(1,90,"GtkPicture","picture",89,None,None,None,None,None,None),
 	(1,91,"GtkGrid","controls_grid",89,None,"overlay",None,1,None,None),
@@ -31,7 +30,9 @@
 	(1,101,"GtkMenuButton","camera_menu_button",81,None,"start",None,2,None,None),
 	(1,103,"GtkPopover",None,101,None,None,None,-1,None,None),
 	(1,104,"GtkFlowBox","shape_box",84,None,None,None,1,None,None),
-	(1,105,"GtkFlowBox","camera_box",103,None,None,None,None,None,None)
+	(1,105,"GtkFlowBox","camera_box",103,None,None,None,None,None,None),
+	(1,106,"GtkToggleButton","debug_mode_button",81,None,"start",None,4,None,None),
+	(1,107,"GtkButton","about_button",81,None,"end",None,4,None,None)
   </object>
   <object_property>
 	(1,2,"GtkWindow","child",None,None,None,None,None,None,None,None,None,None),
@@ -46,9 +47,6 @@
 	(1,84,"GtkPopover","cascade-popdown","True",None,None,None,None,None,None,None,None,None),
 	(1,84,"GtkWidget","visible","False",None,None,None,None,None,None,None,None,None),
 	(1,84,"GtkWidget","width-request","200",None,None,None,None,None,None,None,None,None),
-	(1,88,"GtkButton","has-frame","False",None,None,None,None,None,None,None,None,None),
-	(1,88,"GtkButton","icon-name","dialog-information-symbolic",None,None,None,None,None,None,None,None,None),
-	(1,88,"GtkWidget","tooltip-text","Show about window",None,None,None,None,None,None,None,None,None),
 	(1,90,"GtkWidget","hexpand","True",None,None,None,None,None,None,None,None,None),
 	(1,90,"GtkWidget","vexpand","True",None,None,None,None,None,None,None,None,None),
 	(1,91,"GtkGrid","column-homogeneous","True",None,None,None,None,None,None,None,None,None),
@@ -97,7 +95,14 @@
 	(1,105,"GtkFlowBox","homogeneous","True",None,None,None,None,None,None,None,None,None),
 	(1,105,"GtkFlowBox","max-children-per-line","2",None,None,None,None,None,None,None,None,None),
 	(1,105,"GtkFlowBox","selection-mode","none",None,None,None,None,None,None,None,None,None),
-	(1,105,"GtkWidget","css-classes","camera-box",None,None,None,None,None,None,None,None,None)
+	(1,105,"GtkWidget","css-classes","camera-box",None,None,None,None,None,None,None,None,None),
+	(1,106,"GtkButton","has-frame","False",None,None,None,None,None,None,None,None,None),
+	(1,106,"GtkButton","icon-name","preferences-other-symbolic",None,None,None,None,None,None,None,None,None),
+	(1,106,"GtkWidget","tooltip-text","Toggle debug mode",None,None,None,None,None,None,None,None,None),
+	(1,106,"GtkWidget","visible","False",None,None,None,None,None,None,None,None,None),
+	(1,107,"GtkButton","has-frame","False",None,None,None,None,None,None,None,None,None),
+	(1,107,"GtkButton","icon-name","dialog-information-symbolic",None,None,None,None,None,None,None,None,None),
+	(1,107,"GtkWidget","tooltip-text","Show about window",None,None,None,None,None,None,None,None,None)
   </object_property>
   <object_layout_property>
 	(1,89,90,"GtkOverlayLayoutChild","clip-overlay","True",None,None,None,None),

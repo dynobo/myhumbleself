@@ -9,7 +9,8 @@
     <file compressed="true">shapes/04-paint.png</file>
     <file compressed="true">shapes/05-badge.png</file>
     <file compressed="true">shapes/06-splat.png</file>
-    <file compressed="true">shapes/99-original.png</file>
+    <file compressed="true">shapes/98-aspect-4-3.png</file>
+    <file compressed="true">shapes/99-aspect-16-9.png</file>
   </gresource>
   <gresource prefix="/com/github/dynobo/myhumbleself/icons/scalable">
     <file compressed="true" preprocess="xml-stripblanks">actions/follow-face-symbolic.svg</file>
@@ -21,6 +22,7 @@
     <file compressed="true" preprocess="xml-stripblanks">actions/04-paint-symbolic.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">actions/05-badge-symbolic.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">actions/06-splat-symbolic.svg</file>
-    <file compressed="true" preprocess="xml-stripblanks">actions/99-original-symbolic.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">actions/98-aspect-4-3-symbolic.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">actions/99-aspect-16-9-symbolic.svg</file>
   </gresource>
 </gresources>

@@ -54,6 +54,14 @@
             </property>
           </object>
         </child>
+        <child type="start">
+          <object class="GtkToggleButton" id="debug_mode_button">
+            <property name="has-frame">False</property>
+            <property name="icon-name">preferences-other-symbolic</property>
+            <property name="tooltip-text">Toggle debug mode</property>
+            <property name="visible">False</property>
+          </object>
+        </child>
         <child type="end">
           <object class="GtkButton" id="about_button">
             <property name="has-frame">False</property>
