@@ -14,7 +14,7 @@ logger = logging.getLogger("myhumbleself")
 
 class WritingConfigParser(ConfigParser):
     def set_persistent(
-        self, option: str, value: str | bool | int, section: str = "main"
+        self, option: str, value: str | bool | float, section: str = "main"
     ) -> None:
         """Updates the config file on disk, in case the value has changed.
 

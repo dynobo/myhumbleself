@@ -31,6 +31,7 @@ class FaceDetection:
         self.detector_cnn = cv2.FaceDetectorYN.create(self.cnn_onnx, "", (42, 42))
         self.detector_haarcascade = cv2.CascadeClassifier(self.haarcascade_xml)
         self.selected_detector = method
+        self.debug_mode = False
         logger.info("Using detection method: %s", self.selected_detector)
 
     @staticmethod
@@ -137,7 +138,7 @@ class FaceDetection:
 
         faces = self._detect_faces(image)
 
-        if logger.getEffectiveLevel() == logging.DEBUG:
+        if self.debug_mode:
             # Draw BBox of all detected raw faces
             for f in faces:
                 self._draw_bounding_box(image, f, color=(0, 125, 0))
@@ -150,8 +151,16 @@ class FaceDetection:
 
         face = self._smooth_geometry()
 
-        if logger.getEffectiveLevel() <= logging.INFO and face:
+        if self.debug_mode and face:
             # Draw smoothed BBox for largest face
             self._draw_bounding_box(image, face, color=(0, 255, 0))
-
+            cv2.putText(
+                image,
+                "Smoothed",
+                (face.left + 10, face.top + 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 255, 0, 255),
+                2,
+            )
         return face
