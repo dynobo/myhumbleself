@@ -12,7 +12,7 @@ import cv2
 import gi
 import numpy as np
 
-from myhumbleself import camera, config, face_detection, processor
+from myhumbleself import config, face_detection, processor
 
 gi.require_version("Gdk", "4.0")
 gi.require_version("Gtk", "4.0")
@@ -67,7 +67,6 @@ class MyHumbleSelf(Gtk.Application):
 
         # Init values
         self.config = config.load()
-        self.camera = camera.Camera()
         self.in_presentation_mode = False
         self.fps: list[float] = [0]
         self.fps_window = 50
@@ -158,7 +157,9 @@ class MyHumbleSelf(Gtk.Application):
         Returns:
             Button widget.
         """
-        image = self._cv2_image_to_gtk_image(self.camera.available_cameras[cam_id])
+        image = self._cv2_image_to_gtk_image(
+            self.frame_processor.camera.available_cameras[cam_id]
+        )
         label = Gtk.Label()
         label.set_text(f"{self.cam_item_prefix}{cam_id}")
 
@@ -186,9 +187,12 @@ class MyHumbleSelf(Gtk.Application):
         camera_menu_button = self.builder.get_object("camera_menu_button")
         camera_box = self.builder.get_object("camera_box")
         first_button = None
-        for cam_id in self.camera.available_cameras:
+        for cam_id in self.frame_processor.camera.available_cameras:
             # Show test image in camera menu only in debug mode:
-            if cam_id == camera.FALLBACK_CAM_ID and not self.debug_mode:
+            if (
+                cam_id == self.frame_processor.camera.FALLBACK_CAM_ID
+                and not self.debug_mode
+            ):
                 continue
 
             button = self._create_camera_menu_button(cam_id)
@@ -206,7 +210,7 @@ class MyHumbleSelf(Gtk.Application):
             camera_box.append(button)
 
         # Hide camera menu if only one camera is available, except when in debug mode:
-        if len(self.camera.available_cameras) == 1 and self.debug_mode:
+        if len(self.frame_processor.camera.available_cameras) == 1 and self.debug_mode:
             camera_menu_button.set_visible(False)
 
         return camera_box
@@ -303,8 +307,8 @@ class MyHumbleSelf(Gtk.Application):
     def on_camera_toggled(self, button: Gtk.ToggleButton, cam_id: int) -> None:
         if not button.get_active():
             return
-        self.camera.stop()
-        self.camera.start(cam_id)
+        self.frame_processor.camera.stop()
+        self.frame_processor.camera.start(cam_id)
         self.config.set_persistent("last_active_camera", cam_id)
 
     def on_reset_clicked(self, button: Gtk.Button) -> None:
@@ -337,7 +341,7 @@ class MyHumbleSelf(Gtk.Application):
         )
 
     def on_shutdown(self, app: Gtk.Application) -> None:
-        self.camera.stop()
+        self.frame_processor.camera.stop()
 
     def on_toggle_controls_clicked(self, button: Gtk.Button) -> None:
         self.toggle_presentation_mode()
@@ -390,11 +394,7 @@ class MyHumbleSelf(Gtk.Application):
 
         tick_before = time.perf_counter()
 
-        frame = self.camera.get_frame()
-        if frame is None:
-            return
-
-        image = self.frame_processor.process_frame(frame)
+        image = self.frame_processor.get_process_frame()
         if image is None:
             return
 
@@ -419,7 +419,8 @@ class MyHumbleSelf(Gtk.Application):
         if logger.getEffectiveLevel() <= logging.INFO:
             self.win.set_title(
                 f"MyHumbleSelf - "
-                f"FPS in/out: {np.mean(self.camera.fps):.1f} / {np.mean(self.fps):.1f}"
+                f"FPS in/out: {np.mean(self.frame_processor.camera.fps):.1f} "
+                f"/ {np.mean(self.fps):.1f}"
             )
 
         tick_after = time.perf_counter()
