@@ -5,6 +5,8 @@
 pydeps.png
 code2flow.png
 code2flow.gv
+cprofile.png
+cprofile.pstats
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
