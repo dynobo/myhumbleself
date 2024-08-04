@@ -1,18 +1,16 @@
 import argparse
 import logging
 import os
-import tempfile
 import time
 from pathlib import Path
+from statistics import mean
 
 # Hide warnings show during search for cameras
 os.environ["OPENCV_LOG_LEVEL"] = "FATAL"
 
-import cv2
 import gi
-import numpy as np
 
-from myhumbleself import config, face_detection, video_handler
+from myhumbleself import config, converters, video_handler
 
 gi.require_version("Gdk", "4.0")
 gi.require_version("Gtk", "4.0")
@@ -22,6 +20,8 @@ from gi.repository import Gdk, GdkPixbuf, Gio, Gtk  # noqa: E402
 RESOURCE_PATH = Path(__file__).parent / "resources"
 
 logger = logging.getLogger(__name__)
+
+# TODO: Handle invalid last_camera_id in config
 
 
 def init_logger(log_level: str = "WARNING") -> None:
@@ -39,9 +39,14 @@ class MyHumbleSelf(Gtk.Application):
     def __init__(self, application_id: str, args: argparse.Namespace) -> None:
         super().__init__(application_id=application_id)
 
+        # Resource file
+        self.resource = Gio.resource_load(
+            str(Path(__file__).parent / "resources" / "myhumbleself.gresource")
+        )
+        Gio.Resource._register(self.resource)
+
         # Top level
         self.win: Gtk.ApplicationWindow
-        self.resource: Gio.Resource
 
         # Webcam widget
         self.picture: Gtk.Picture
@@ -66,17 +71,19 @@ class MyHumbleSelf(Gtk.Application):
         self.zoom_out_button: Gtk.Button
 
         # Init values
+        self._face_detection_method = video_handler.face_detection.Method[
+            args.face_detection.upper()
+        ]
         self.config = config.load()
         self.in_presentation_mode = False
         self.fps: list[float] = [0]
         self.fps_window = 50
         self.cam_item_prefix = "/dev/video"
-        self.hide_controls_timeout_id: int | None = None
         self.loglevel_debug = logger.getEffectiveLevel() == logging.DEBUG
         self.video_handler = video_handler.VideoHandler(
-            face_detection_model=face_detection.DetectionModels[
-                args.face_detection.upper()
-            ],
+            cam_id=self.config["main"].getint("last_active_camera", 0),
+            face_detection_model=self._face_detection_method,
+            shape_png_buffer=self._load_active_shape_png(),
             zoom_factor=self.config["main"].getfloat("zoom_factor", 1),
             offset_x=self.config["main"].getint("offset_x", 0),
             offset_y=self.config["main"].getint("offset_y", 0),
@@ -92,11 +99,6 @@ class MyHumbleSelf(Gtk.Application):
         Args:
             app: Gtk Application.
         """
-        self.resource = Gio.resource_load(
-            str(Path(__file__).parent / "resources" / "myhumbleself.gresource")
-        )
-        Gio.Resource._register(self.resource)
-
         self.builder = Gtk.Builder()
         self.builder.add_from_resource("/com/github/dynobo/myhumbleself/window.ui")
 
@@ -127,10 +129,10 @@ class MyHumbleSelf(Gtk.Application):
         self.reset_button.connect("clicked", self.on_reset_clicked)
 
         self.zoom_in_button = self.builder.get_object("zoom_in_button")
-        self.zoom_in_button.connect("clicked", self.on_zoom_in)
+        self.zoom_in_button.connect("clicked", self.on_zoom, 1)
 
         self.zoom_out_button = self.builder.get_object("zoom_out_button")
-        self.zoom_out_button.connect("clicked", self.on_zoom_out)
+        self.zoom_out_button.connect("clicked", self.on_zoom, -1)
 
         self.left_button = self.builder.get_object("left_button")
         self.left_button.connect("clicked", self.on_move_clicked, -1, 0)
@@ -148,7 +150,7 @@ class MyHumbleSelf(Gtk.Application):
 
         self.win.present()
 
-    def _create_camera_menu_button(self, cam_id: int) -> Gtk.ToggleButton:
+    def create_camera_menu_button(self, cam_id: int) -> Gtk.ToggleButton:
         """Create a custom button for camera menu, with image and label underneath.
 
         Args:
@@ -157,8 +159,8 @@ class MyHumbleSelf(Gtk.Application):
         Returns:
             Button widget.
         """
-        image = self._cv2_image_to_gtk_image(
-            self.video_handler.get_available_cameras()[cam_id]
+        image = converters.cv2_image_to_gtk_image(
+            self.video_handler.available_cameras[cam_id]
         )
         label = Gtk.Label()
         label.set_text(f"{self.cam_item_prefix}{cam_id}")
@@ -186,14 +188,16 @@ class MyHumbleSelf(Gtk.Application):
         """
         camera_menu_button = self.builder.get_object("camera_menu_button")
         camera_box = self.builder.get_object("camera_box")
-        camera_box.remove_all()
         first_button = None
-        for cam_id in self.video_handler.get_available_cameras():
-            button = self._create_camera_menu_button(cam_id)
+        for cam_id in self.video_handler.available_cameras:
+            button = self.create_camera_menu_button(cam_id)
 
             # Activate button if it was the last active camera
             if cam_id == self.config["main"].getint("last_active_camera", 0):
                 button.set_active(True)
+
+            if cam_id == self.video_handler.FALLBACK_CAM_ID:
+                button.set_visible(self.loglevel_debug)
 
             # Set button group
             if first_button is None:
@@ -203,9 +207,10 @@ class MyHumbleSelf(Gtk.Application):
 
             camera_box.append(button)
 
-        # Hide camera menu if only one camera is available, except when in debug mode:
+        # Hide camera menu if only one camera (plus fallback) is available, except
+        # when in debug mode:
         is_visible = (
-            len(self.video_handler.get_available_cameras()) > 1 or self.loglevel_debug
+            len(self.video_handler.available_cameras) - 1 > 1 or self.loglevel_debug
         )
         camera_menu_button.set_visible(is_visible)
 
@@ -278,25 +283,29 @@ class MyHumbleSelf(Gtk.Application):
         )
 
     def on_follow_face_clicked(self, button: Gtk.ToggleButton) -> None:
-        self.config.set_persistent("follow_face", button.get_active())
-
-        if button.get_active():
+        follow_face = button.get_active()
+        self.config.set_persistent("follow_face", follow_face)
+        self.video_handler.follow_face = follow_face
+        if follow_face:
             button.set_tooltip_text("Do not follow face")
             button.set_icon_name("follow-face-off-symbolic")
         else:
             button.set_tooltip_text("Follow face")
             button.set_icon_name("follow-face-symbolic")
 
-    def on_shape_toggled(self, button: Gtk.ToggleButton, shape: str) -> None:
-        if not button.get_active():
-            return
-
+    def _load_active_shape_png(self) -> bytes:
+        shape = self.config["main"].get("shape")
         shape_png = self.resource.lookup_data(
             f"/com/github/dynobo/myhumbleself/shapes/{shape}",
             Gio.ResourceLookupFlags.NONE,
         ).get_data()
-        self.video_handler.set_shape(shape_png)
+        return shape_png
+
+    def on_shape_toggled(self, button: Gtk.ToggleButton, shape: str) -> None:
+        if not button.get_active():
+            return
         self.config.set_persistent("shape", shape)
+        self.video_handler.set_shape(self._load_active_shape_png())
 
     def on_camera_toggled(self, button: Gtk.ToggleButton, cam_id: int) -> None:
         if not button.get_active():
@@ -308,30 +317,19 @@ class MyHumbleSelf(Gtk.Application):
         self.config.set_persistent("offset_x", 0)
         self.config.set_persistent("offset_y", 0)
         self.config.set_persistent("zoom_factor", 1)
+        self.video_handler.reset_view()
 
     def on_move_clicked(self, button: Gtk.Button, factor_x: int, factor_y: int) -> None:
-        self.config.set_persistent(
-            "offset_x",
-            self.config["main"].getint("offset_x", 0)
-            + factor_x * self.video_handler.MOVE_STEP,
-        )
-        self.config.set_persistent(
-            "offset_y",
-            self.config["main"].getint("offset_y", 0)
-            + factor_y * self.video_handler.MOVE_STEP,
-        )
+        self.video_handler.offset_x += factor_x * self.video_handler.MOVE_STEP
+        self.video_handler.offset_y += factor_y * self.video_handler.MOVE_STEP
+        self.config.set_persistent("offset_x", self.video_handler.offset_x)
+        self.config.set_persistent("offset_y", self.video_handler.offset_y)
 
-    def on_zoom_in(self, btn: Gtk.Button) -> None:
+    def on_zoom(self, btn: Gtk.Button, factor_z: int) -> None:
         zoom = self.config["main"].getfloat("zoom_factor", 1)
-        self.config.set_persistent(
-            "zoom_factor", zoom + self.video_handler.ZOOM_STEP * 1
-        )
-
-    def on_zoom_out(self, btn: Gtk.Button) -> None:
-        zoom = self.config["main"].getfloat("zoom_factor", 1)
-        self.config.set_persistent(
-            "zoom_factor", zoom + self.video_handler.ZOOM_STEP * -1
-        )
+        zoom -= self.video_handler.ZOOM_STEP * factor_z
+        self.video_handler.zoom_factor = max(zoom, self.video_handler.MIN_ZOOM_FACTOR)
+        self.config.set_persistent("zoom_factor", zoom)
 
     def on_shutdown(self, app: Gtk.Application) -> None:
         self.video_handler.set_camera(None)
@@ -342,8 +340,6 @@ class MyHumbleSelf(Gtk.Application):
     def on_toggle_debug_position(self, button: Gtk.Button) -> None:
         debug_mode = button.get_active()
         self.video_handler.set_debug_mode(on=debug_mode)
-        # Re-init camera box to show/hide static test camera
-        self.init_camera_box()
 
     def on_picture_tick(self, widget: Gtk.Widget, idle: Gdk.FrameClock) -> bool:
         """Tick callback on picture container.
@@ -382,19 +378,17 @@ class MyHumbleSelf(Gtk.Application):
         Args:
             widget: Tick owner widget.
         """
-        if not self.video_handler:
-            return
-
         tick_before = time.perf_counter()
 
         image = self.video_handler.get_frame()
-        if image is None:
-            return
+        # TODO: Implement skip if frame didn't change?
 
-        self.left_button.set_sensitive(self.video_handler.can_move_left)
-        self.right_button.set_sensitive(self.video_handler.can_move_right)
-        self.up_button.set_sensitive(self.video_handler.can_move_up)
-        self.down_button.set_sensitive(self.video_handler.can_move_down)
+        self.left_button.set_sensitive(self.video_handler.can_move_left())
+        self.right_button.set_sensitive(self.video_handler.can_move_right())
+        self.up_button.set_sensitive(self.video_handler.can_move_up())
+        self.down_button.set_sensitive(self.video_handler.can_move_down())
+        self.zoom_out_button.set_sensitive(self.video_handler.can_zoom_out())
+        self.zoom_in_button.set_sensitive(self.video_handler.can_zoom_in())
 
         height, width, channels = image.shape
         pixbuf = GdkPixbuf.Pixbuf.new_from_data(
@@ -412,8 +406,8 @@ class MyHumbleSelf(Gtk.Application):
         if logger.getEffectiveLevel() <= logging.INFO:
             self.win.set_title(
                 f"MyHumbleSelf - "
-                f"FPS in/out: {np.mean(self.video_handler._camera.fps):.1f} "
-                f"/ {np.mean(self.fps):.1f}"
+                f"FPS in/out: {mean(self.video_handler._camera.fps):.1f} "
+                f"/ {mean(self.fps):.1f}"
             )
 
         tick_after = time.perf_counter()
@@ -421,22 +415,6 @@ class MyHumbleSelf(Gtk.Application):
         self.fps.append(fps)
         if len(self.fps) > self.fps_window:
             self.fps.pop(0)
-
-    @staticmethod
-    def _cv2_image_to_gtk_image(cv2_image: np.ndarray) -> Gtk.Image:
-        """Create Gtk.Image from cv2 image via a temporary file.
-
-        Args:
-            cv2_image: OpenCV input image.
-
-        Returns:
-            GTK image widget.
-        """
-        with tempfile.NamedTemporaryFile(suffix=".jpg") as temp_file:
-            temp_image = cv2.resize(cv2_image, fx=0.20, fy=0.20, dsize=(0, 0))
-            cv2.imwrite(temp_file.name, temp_image)
-            image = Gtk.Image.new_from_file(temp_file.name)
-        return image
 
 
 def _parse_args() -> argparse.Namespace:
@@ -450,7 +428,7 @@ def _parse_args() -> argparse.Namespace:
         "-f",
         "--face-detection",
         type=str,
-        choices=[m.name.lower() for m in face_detection.DetectionModels],
+        choices=[m.name.lower() for m in video_handler.face_detection.Method],
         help="Model to use for face detection. "
         "The default 'cnn' is more accurate but requires more compute.",
         default="cnn",

@@ -1,5 +1,5 @@
 import logging
-from copy import deepcopy
+from collections.abc import Callable
 
 import cv2
 import numpy as np
@@ -9,103 +9,132 @@ from myhumbleself import camera, face_detection, structures
 logger = logging.getLogger(__name__)
 
 
-def _convert_colorspace(frame: np.ndarray) -> np.ndarray:
-    return cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+def cache(func: Callable) -> Callable:
+    """Custom approximating cache decorator for numpy arrays.
+
+    This is intended to be used in VideoHandler._process_frame method only!
+
+    The reason is, that often the GTK gui will call get_frame faster than the FPS of
+    the camera. This will result in the same frame being processed multiple times.
+
+    This decorator instead caches the processed frame and serves it, if the frame is
+    still the same.
+
+    To estimate, if the frame is the same, only a center patch of the frame is
+    considered. The size of the patch is a trade-off between performance and accuracy.
+    We use a relatively small patch, as the camera usually has a fair bit of noise and
+    the center usually shows a part of the head. This makes it unlikely, that the two
+    subsequent frames have the same patch but are otherwise fairly different.
+
+    Rough tests show a speedup of 2x (cache is hit ~once per frame), but it highly
+    depends on camera FPS and system.
+
+    (functools.lru_cache does not work with numpy arrays, as they are not hashable.
+    hashing the whole image is too slow, anyway.)
+    """
+    cache.id = 0  # type: ignore [attr-defined]
+    cache.content = None  # type: ignore [attr-defined]
+    patch_size = 10
+
+    def inner(cls, ary: np.ndarray) -> np.ndarray:  # noqa: ANN001
+        x, y = ary.shape[0] // 2, ary.shape[1] // 2
+        new_cache_id = ary[x : x + patch_size, y : y + patch_size, 1].data.tobytes()  # type: ignore [attr-defined]
+        if new_cache_id != cache.id:  # type: ignore [attr-defined]
+            cache.id = new_cache_id  # type: ignore [attr-defined]
+            cache.content = func(cls, ary)  # type: ignore [attr-defined]
+        return cache.content  # type: ignore [attr-defined]
+
+    return inner
 
 
 class VideoHandler:
-    def __init__(
+    def __init__(  # noqa:PLR0913
         self,
-        face_detection_model: face_detection.DetectionModels,
+        cam_id: int,
+        face_detection_model: face_detection.Method,
+        shape_png_buffer: bytes,
         zoom_factor: float,
         offset_x: int,
         offset_y: int,
         follow_face: bool,
     ) -> None:
-        self.frame: np.ndarray | None = None
-        self.frame_size: tuple[int, int] | None = None
-        self.shape: np.ndarray | None = None
+        self._shape_mask = cv2.imdecode(
+            np.frombuffer(shape_png_buffer, dtype=np.uint8), cv2.IMREAD_GRAYSCALE
+        )
+        # Face detection area. Cached here to allow the use case, where face detection
+        # is only used once to get the face, but then disabled to avoid tracking during
+        # presentation.
+        self._face_area: structures.Rect | None = None
+        # User adjusted area, with padding, offset and zoom. Cached to allow allow
+        # detection, if we are already at the edge of the image, to disable buttons
+        self._focus_area: structures.Rect | None = None
 
-        self.face_detection = face_detection.FaceDetection(method=face_detection_model)
+        self._cam_id: int = cam_id
         self._camera = camera.Camera()
+        self._face_detection = face_detection.FaceDetection(method=face_detection_model)
 
         self.zoom_factor = zoom_factor
         self.offset_x = offset_x
         self.offset_y = offset_y
+
         self.follow_face = follow_face
         self.ZOOM_STEP = 0.1
         self.MOVE_STEP = 20
-
-        self.focus_area: structures.Rect | None = None
-        self.face_area: structures.Rect | None = None
-
+        self.MIN_ZOOM_FACTOR = 0.1
         self.debug_mode = False
 
-    def _get_padding(self) -> int:
-        if not self.focus_area:
-            return 0
+        self.available_cameras = self._camera.available_cameras
+        self.FALLBACK_CAM_ID = self._camera.FALLBACK_CAM_ID
 
-        base_pad = (
-            max(self.focus_area.width, self.focus_area.height) / 3
-            if self.focus_area
-            else 0
+        self._camera.start(cam_id)
+
+    def _get_face_area_placeholder(self) -> structures.Rect:
+        base_size = int(min(*self._frame_size_hw) / 1.6)
+        rect = structures.Rect(
+            top=(self._frame_size_hw[0] - base_size) // 2,
+            left=(self._frame_size_hw[1] - base_size) // 2,
+            width=base_size,
+            height=base_size,
         )
-        padding = int(-base_pad + base_pad / self.zoom_factor / 0.5)
-
-        return padding
+        return rect
 
     @property
+    def _frame_size_hw(self) -> tuple[int, int]:
+        cam_image = self.available_cameras[self._cam_id]
+        return (cam_image.shape[0], cam_image.shape[1])
+
     def can_zoom_out(self) -> bool:
-        return False
+        if self._focus_area is None:
+            return False
+        return (
+            self._focus_area.width < self._frame_size_hw[1]
+            and self._focus_area.height < self._frame_size_hw[0]
+        )
 
-    @property
+    def can_zoom_in(self) -> bool:
+        return self.zoom_factor > self.MIN_ZOOM_FACTOR + self.ZOOM_STEP
+
     def can_move_left(self) -> bool:
-        if not self.focus_area:
-            return True
+        # Note: those methods are implemented for each direction individually, because
+        # it is faster to call different methods than using one method with conditions.
+        if self._focus_area is None:
+            return False
+        return self._focus_area.left > 0
 
-        next_left = (
-            self.focus_area.left - self._get_padding() + self.offset_x - self.MOVE_STEP
-        )
-        return next_left > 0
-
-    @property
     def can_move_right(self) -> bool:
-        if self.frame is None:
+        if self._focus_area is None:
             return False
+        return self._focus_area.right < self._frame_size_hw[1]
 
-        if not self.focus_area:
-            return True
-
-        next_right = (
-            self.focus_area.right + self._get_padding() + self.offset_x + self.MOVE_STEP
-        )
-        return next_right < self.frame.shape[1]
-
-    @property
     def can_move_up(self) -> bool:
-        if not self.focus_area:
-            return True
-
-        next_top = (
-            self.focus_area.top - self._get_padding() + self.offset_y - self.MOVE_STEP
-        )
-        return next_top > 0
-
-    @property
-    def can_move_down(self) -> bool:
-        if self.frame is None:
+        if self._focus_area is None:
             return False
+        return self._focus_area.top > 0
 
-        if not self.focus_area:
-            return True
-
-        next_top = (
-            self.focus_area.bottom
-            + self._get_padding()
-            + self.offset_y
-            + self.MOVE_STEP
-        )
-        return next_top > self.frame.shape[0]
+    def can_move_down(self) -> bool:
+        if self._focus_area is None:
+            return False
+        return self._focus_area.bottom < self._frame_size_hw[0]
 
     def set_camera(self, cam_id: int | None) -> None:
         self._camera.stop()
@@ -113,132 +142,158 @@ class VideoHandler:
             self._camera.start(cam_id)
 
     def set_shape(self, png_buffer: bytes) -> None:
-        self.shape = cv2.imdecode(
-            np.frombuffer(png_buffer, dtype=np.uint8), cv2.IMREAD_COLOR
+        self._shape_mask = cv2.imdecode(
+            np.frombuffer(png_buffer, dtype=np.uint8), cv2.IMREAD_GRAYSCALE
         )
 
     def set_debug_mode(self, on: bool) -> None:
         self.debug_mode = on
-        self.face_detection.debug_mode = on
+        self._face_detection.debug_mode = on
 
-    def get_available_cameras(self) -> dict[int, np.ndarray]:
-        # Show test image in camera menu only in debug mode:
-        cams = deepcopy(self._camera.available_cameras)
-        if not self.debug_mode:
-            del cams[self._camera.FALLBACK_CAM_ID]
-        return cams
+    def reset_view(self) -> None:
+        self._face_area = None
+        self.offset_x = 0
+        self.offset_y = 0
+        self.zoom_factor = 1.0
 
-    def _get_focus_area(
-        self, face_area: structures.Rect | None, frame_size: tuple[int, int]
-    ) -> structures.Rect:
-        if face_area is not None:
-            focus_area = face_area
-        else:
-            base_size = min(*frame_size) // 3
-            focus_area = structures.Rect(
-                top=(frame_size[0] - base_size) // 2,
-                left=(frame_size[1] - base_size) // 2,
-                width=base_size,
-                height=base_size,
-            )
-
-        return focus_area
-
-    def get_frame(self) -> np.ndarray | None:
-        self.frame = self._camera.get_frame()
-
-        if self.frame is None:
-            logger.debug("Frame is None, skip processing.")
-            return None
-        if self.shape is None:
-            logger.debug("Shape is None, skip processing.")
-            return None
-
-        if self.follow_face:
-            self.face_area = self.face_detection.get_face(self.frame)
-
-        frame_size = (self.frame.shape[0], self.frame.shape[1])
-        self.focus_area = self._get_focus_area(
-            face_area=self.face_area, frame_size=frame_size
-        )
-
-        image = _convert_colorspace(self.frame)
-
-        image = self._crop_to_shape(
-            image=image,
-            shape=self.shape,
-            focus_area=self.focus_area,
-        )
-        return image
-
-    def _crop_to_shape(
+    def _draw_bbox(
         self,
+        rect: structures.Rect,
         image: np.ndarray,
-        shape: np.ndarray,
-        focus_area: structures.Rect,
-    ) -> np.ndarray:
-        shape_height, shape_width, _ = shape.shape
-        image_height, image_width, _ = image.shape
-
-        padding = self._get_padding()
-
-        # Sanitize focus area to stay within image bounds
-        area = structures.Rect(
-            top=max(0, focus_area.top - padding + self.offset_y),
-            left=max(0, focus_area.left - padding + self.offset_x),
-            width=min(image_width, focus_area.width + padding * 2),
-            height=min(image_height, focus_area.height + padding * 2),
+        color: tuple[int, int, int],
+        label: str = "",
+    ) -> None:
+        border_width = 2
+        cv2.rectangle(
+            image,
+            rect.left_top,
+            (rect.right - border_width, rect.bottom - border_width),
+            color,
+            border_width,
+        )
+        cv2.putText(
+            image,
+            f"{label} {rect}",
+            (rect.left + 10, rect.top + 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.6,
+            color,
+            2,
         )
 
-        # Calculate scale for shape to contain face
-        scale_y = area.height / shape_height
-        scale_x = area.width / shape_width
-        scale = max(scale_y, scale_x)
+    def get_frame(self) -> np.ndarray:
+        frame = self._camera.get_frame()
+        frame = self._process_frame(frame)
+        return frame
 
-        # Sanitize scale to stay within image bounds
-        if shape_height * scale > image_height:
-            scale = image_height / shape_height
-        if shape_width * scale > image_width:
-            scale = image_width / shape_width
+    @cache
+    def _process_frame(self, frame: np.ndarray) -> np.ndarray:
+        """Process frame and return it with applied shape mask.
 
-        # Scale shape
-        mask = cv2.resize(shape, None, fx=scale, fy=scale, interpolation=cv2.INTER_AREA)
-        mask_height, mask_width, _ = mask.shape
+        Three different areas are calculated
+        - face_area: Area supposed to contain face. Should be stabilized.
+        - focus_area: User adjusted area, with padding, offset and zoom.
+        - mask_area: Final area, restrained to image size. Should match aspect ratio of
+          shape mask. At best case, this will be close to focus_area.
 
-        # Calculate mask position
-        mask_x = area.left - (mask_width - area.width) // 2
-        mask_y = area.top - (mask_height - area.height) // 2
+        Returns:
+            Image ready to be displayed.
+        """
+        if self.follow_face:
+            self._face_area = self._face_detection.get_face(frame)
+        elif self._face_area is None:
+            self._face_area = self._get_face_area_placeholder()
 
-        # Sanitize mask position to stay within image bounds
-        mask_x = max(0, min(mask_x, image_width - mask_width))
-        mask_y = max(0, min(mask_y, image_height - mask_height))
+        self._focus_area = self._get_focus_area(face_area=self._face_area)
+        mask_area = self._get_mask_area(
+            focus_area=self._focus_area,
+            image_size_hw=(frame.shape[0], frame.shape[1]),
+            shape_size_hw=(self._shape_mask.shape[0], self._shape_mask.shape[1]),
+        )
 
         if self.debug_mode:
-            cv2.rectangle(
-                image,
-                (mask_x, mask_y),
-                (mask_x + mask_width, mask_y + mask_height),
-                (0, 0, 255, 255),
-                2,
+            self._draw_bbox(
+                rect=self._face_area,
+                image=frame,
+                color=(0, 255, 0),
+                label="Face",
             )
-            cv2.putText(
-                image,
-                "Crop",
-                (mask_x + 10, mask_y + 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 0, 255, 255),
-                2,
+            self._draw_bbox(
+                rect=self._focus_area,
+                image=frame,
+                color=(255, 0, 0),
+                label="Focus",
             )
-            return image
+            self._draw_bbox(
+                rect=mask_area,
+                image=frame,
+                color=(0, 0, 255),
+                label="Mask",
+            )
+            return cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
+
+        frame = self._crop_to_mask(image=frame, mask=mask_area)
+        frame = self._apply_shape_mask(image=frame, shape_mask=self._shape_mask)
+        return frame
+
+    def _apply_shape_mask(
+        self, image: np.ndarray, shape_mask: np.ndarray
+    ) -> np.ndarray:
+        image_height, image_width, _ = image.shape
+
+        # Scale grayscale shape mask
+        mask = cv2.resize(
+            shape_mask, (image_width, image_height), interpolation=cv2.INTER_NEAREST
+        )
+        # ONHOLD: Converting to RGBA is very slow, but GdkPixbuf can't handle BGR
+        # and OpenCV face detection doesn't work with RGB
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGBA)
+        image[:, :, 3] = mask
+        return image
+
+    def _crop_to_mask(self, image: np.ndarray, mask: structures.Rect) -> np.ndarray:
+        mask_height, mask_width = mask.height, mask.width
+        mask_x, mask_y = mask.left, mask.top
 
         # Crop image to bounds
         cropped_image = image[
             mask_y : mask_y + mask_height, mask_x : mask_x + mask_width
         ]
 
-        # Apply alpha channel from mask onto image
-        # TODO: Check why semi-transparent pixels do not work
-        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
-        cropped_image[:, :, 3] = mask
         return cropped_image
+
+    def _get_focus_area(self, face_area: structures.Rect) -> structures.Rect:
+        focus_area = face_area.copy()
+        focus_area.scale(self.zoom_factor)
+
+        padding = int(max(face_area.width, face_area.height) / 1.5 * self.zoom_factor)
+        focus_area.pad(padding=padding)
+
+        focus_area.move_by(x=self.offset_x, y=self.offset_y)
+        return focus_area
+
+    def _get_mask_area(
+        self,
+        focus_area: structures.Rect,
+        image_size_hw: tuple[int, int],
+        shape_size_hw: tuple[int, int],
+    ) -> structures.Rect:
+        mask_area = focus_area.copy()
+        shape_height, shape_width = shape_size_hw
+        aspect_ratio = shape_width / shape_height
+
+        # Adjust aspect ratio of mask area to match shape
+        if mask_area.width / mask_area.height < aspect_ratio:
+            new_width = int(mask_area.height * aspect_ratio)
+            width_delta = new_width - mask_area.width
+            mask_area.width = new_width
+            mask_area.left = mask_area.left - width_delta // 2
+        else:
+            new_height = int(mask_area.width / aspect_ratio)
+            height_delta = new_height - mask_area.height
+            mask_area.height = new_height
+            mask_area.top = mask_area.top - height_delta // 2
+
+        image_height, image_width = image_size_hw
+        mask_area.stay_within(width=image_width, height=image_height)
+        return mask_area
