@@ -36,7 +36,7 @@ class Camera:
         self.available_cameras = self._get_available_cameras()
         self._cam_id: int
         self._capture: cv2.VideoCapture | PlaceholderVideoCapture | None = None
-        self.frame: np.ndarray | None = None
+        self.frame: np.ndarray = np.zeros((1080, 1920, 3), np.uint8)
         self.fps: list[float] = [0]
         self.fps_window = 100
         self.stop_video_thread = False
@@ -66,6 +66,8 @@ class Camera:
 
         for idx in cam_ids_to_try:
             cap = self._get_video_capture(idx)
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1920)  # type: ignore # FP
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 1080)  # type: ignore # FP
             try:
                 read_status, frame = cap.read()
             except cv2.error:
@@ -128,7 +130,7 @@ class Camera:
 
         self.video_thread = None
 
-    def get_frame(self) -> np.ndarray | None:
+    def get_frame(self) -> np.ndarray:
         return self.frame
 
     def update(self) -> None:

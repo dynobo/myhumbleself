@@ -10,7 +10,7 @@ from myhumbleself.structures import Rect
 logger = logging.getLogger(__name__)
 
 
-class DetectionModels(Enum):
+class Method(Enum):
     CNN = auto()
     HAARCASCADE = auto()
 
@@ -21,7 +21,7 @@ class FaceDetection:
     )
     haarcascade_xml = f"{cv2.data.haarcascades}haarcascade_frontalface_default.xml"  # type: ignore # FP
 
-    def __init__(self, method: DetectionModels) -> None:
+    def __init__(self, method: Method) -> None:
         self._history: list[Rect] = []
         self._max_history_len = 20
         self._last_smoothed_geometry: Rect | None = None
@@ -43,7 +43,7 @@ class FaceDetection:
             pt1=face_coords.left_top,
             pt2=face_coords.right_bottom,
             color=color,
-            thickness=1,
+            thickness=2,
         )
 
     def _detect_faces_haarcascade(self, image: np.ndarray) -> list[Rect]:
@@ -58,6 +58,7 @@ class FaceDetection:
 
     def _detect_faces_cnn(self, image: np.ndarray) -> list[Rect]:
         # Scale down to speed up and improve detection
+        # TODO: Make instance variable, expose via cli
         target_width = 250  # based on little testing
         scale_factor = target_width / max(image.shape)
         image = cv2.resize(
@@ -65,7 +66,7 @@ class FaceDetection:
             None,
             fx=scale_factor,
             fy=scale_factor,
-            interpolation=cv2.INTER_AREA,
+            interpolation=cv2.INTER_NEAREST,
         )
 
         # Detect faces
@@ -85,9 +86,9 @@ class FaceDetection:
         return faces
 
     def _detect_faces(self, image: np.ndarray) -> list[Rect]:
-        if self.selected_detector == DetectionModels.CNN:
+        if self.selected_detector == Method.CNN:
             return self._detect_faces_cnn(image)
-        if self.selected_detector == DetectionModels.HAARCASCADE:
+        if self.selected_detector == Method.HAARCASCADE:
             return self._detect_faces_haarcascade(image)
         raise ValueError(f"Unknown face detection method: {self.selected_detector}")
 
@@ -150,17 +151,4 @@ class FaceDetection:
             self._history = self._history[-self._max_history_len :]
 
         face = self._smooth_geometry()
-
-        if self.debug_mode and face:
-            # Draw smoothed BBox for largest face
-            self._draw_bounding_box(image, face, color=(0, 255, 0))
-            cv2.putText(
-                image,
-                "Smoothed",
-                (face.left + 10, face.top + 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.7,
-                (0, 255, 0, 255),
-                2,
-            )
         return face
