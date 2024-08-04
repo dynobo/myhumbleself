@@ -26,7 +26,7 @@ class PlaceholderVideoCapture:
     def isOpened(self) -> bool:  # noqa: N802 # camelCase used by OpenCV
         return True
 
-    def set(self, prop_id: Any, val: Any) -> int:  # noqa: ANN401
+    def set(self, _: Any, __: Any) -> int:  # noqa: ANN401
         return 0
 
 
@@ -143,7 +143,7 @@ class Camera:
                     logger.error("Capture device not ready.")
                     break
 
-                self.grabbed, self.frame = self._capture.read()
+                _, self.frame = self._capture.read()
 
                 tick = cv2.getTickCount()
                 fps = 1 / ((tick - last_tick) * clock_period)
