@@ -14,10 +14,9 @@ from myhumbleself import config, converters, video_handler
 
 gi.require_version("Gdk", "4.0")
 gi.require_version("Gtk", "4.0")
+gi.require_version("Gio", "4.0")
 gi.require_version("GdkPixbuf", "2.0")
 from gi.repository import Gdk, GdkPixbuf, Gio, Gtk  # noqa: E402
-
-RESOURCE_PATH = Path(__file__).parent / "resources"
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +56,6 @@ class MyHumbleSelf(Gtk.Application):
         self.camera_box: Gtk.FlowBox
 
         # Controls Container
-        self.controls_grid: Gtk.Grid
         self.overlay: Gtk.Overlay
 
         # Controls
@@ -119,7 +117,6 @@ class MyHumbleSelf(Gtk.Application):
             self.debug_mode_button.set_visible(True)
             self.debug_mode_button.connect("clicked", self.on_toggle_debug_position)
 
-        self.controls_grid = self.builder.get_object("controls_grid")
         self.overlay = self.builder.get_object("overlay")
 
         self.toggle_controls_button = self.builder.get_object("toggle_controls_button")
@@ -325,23 +322,23 @@ class MyHumbleSelf(Gtk.Application):
         self.config.set_persistent("offset_x", self.video_handler.offset_x)
         self.config.set_persistent("offset_y", self.video_handler.offset_y)
 
-    def on_zoom(self, btn: Gtk.Button, factor_z: int) -> None:
+    def on_zoom(self, _: Gtk.Button, factor_z: int) -> None:
         zoom = self.config["main"].getfloat("zoom_factor", 1)
         zoom -= self.video_handler.ZOOM_STEP * factor_z
         self.video_handler.zoom_factor = max(zoom, self.video_handler.MIN_ZOOM_FACTOR)
         self.config.set_persistent("zoom_factor", zoom)
 
-    def on_shutdown(self, app: Gtk.Application) -> None:
+    def on_shutdown(self, _: Gtk.Application) -> None:
         self.video_handler.set_camera(None)
 
-    def on_toggle_controls_clicked(self, button: Gtk.Button) -> None:
+    def on_toggle_controls_clicked(self, _: Gtk.Button) -> None:
         self.toggle_presentation_mode()
 
     def on_toggle_debug_position(self, button: Gtk.Button) -> None:
         debug_mode = button.get_active()
         self.video_handler.set_debug_mode(on=debug_mode)
 
-    def on_picture_tick(self, widget: Gtk.Widget, idle: Gdk.FrameClock) -> bool:
+    def on_picture_tick(self, widget: Gtk.Widget, _: Gdk.FrameClock) -> bool:
         """Tick callback on picture container.
 
         Used to update the webcam image on every application tick.
