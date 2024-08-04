@@ -14,7 +14,7 @@ from myhumbleself import config, converters, video_handler
 
 gi.require_version("Gdk", "4.0")
 gi.require_version("Gtk", "4.0")
-gi.require_version("Gio", "4.0")
+gi.require_version("Gio", "2.0")
 gi.require_version("GdkPixbuf", "2.0")
 from gi.repository import Gdk, GdkPixbuf, Gio, Gtk  # noqa: E402
 
@@ -73,7 +73,6 @@ class MyHumbleSelf(Gtk.Application):
             args.face_detection.upper()
         ]
         self.config = config.load()
-        self.in_presentation_mode = False
         self.fps: list[float] = [0]
         self.fps_window = 50
         self.cam_item_prefix = "/dev/video"
@@ -120,9 +119,12 @@ class MyHumbleSelf(Gtk.Application):
         self.overlay = self.builder.get_object("overlay")
 
         self.toggle_controls_button = self.builder.get_object("toggle_controls_button")
-        self.toggle_controls_button.connect("clicked", self.on_toggle_controls_clicked)
+        self.toggle_controls_button.set_icon_name("controls-hide-symbolic")
+        self.toggle_controls_button.connect("toggled", self.on_toggle_controls_clicked)
 
         self.reset_button = self.builder.get_object("reset_button")
+        self.reset_button.set_icon_name("reset-symbolic")
+        self.reset_button.set_tooltip_text("Reset view")
         self.reset_button.connect("clicked", self.on_reset_clicked)
 
         self.zoom_in_button = self.builder.get_object("zoom_in_button")
@@ -331,8 +333,11 @@ class MyHumbleSelf(Gtk.Application):
     def on_shutdown(self, _: Gtk.Application) -> None:
         self.video_handler.set_camera(None)
 
-    def on_toggle_controls_clicked(self, _: Gtk.Button) -> None:
-        self.toggle_presentation_mode()
+    def on_toggle_controls_clicked(self, btn: Gtk.Button) -> None:
+        btn.set_icon_name(
+            "controls-show-symbolic" if btn.get_active() else "controls-hide-symbolic"
+        )
+        self.toggle_presentation_mode(on=btn.get_active())
 
     def on_toggle_debug_position(self, button: Gtk.Button) -> None:
         debug_mode = button.get_active()
@@ -353,12 +358,11 @@ class MyHumbleSelf(Gtk.Application):
         self.draw_image(widget)
         return True
 
-    def toggle_presentation_mode(self) -> None:
-        self.in_presentation_mode = not self.in_presentation_mode
+    def toggle_presentation_mode(self, on: bool) -> None:
         titlebar_height = self.win.get_titlebar().get_height()
         css_classes = self.win.get_css_classes()
 
-        if self.in_presentation_mode:
+        if on:
             css_classes.append("transparent")
             self.win.set_decorated(False)
             self.overlay.set_margin_top(titlebar_height)

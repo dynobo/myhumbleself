@@ -18,7 +18,12 @@ class PlaceholderVideoCapture:
 
     def read(self) -> tuple[bool, np.ndarray]:
         sleep(0.01)
-        return True, self._placeholder_image.copy()
+        image = self._placeholder_image.copy()
+        # Add noise to center to invalidate video handler cache:
+        x, y = int(image.shape[0] / 2), int(image.shape[1] / 2)
+        noise = np.random.randint(0, 3, (10, 10), np.uint8)
+        image[x : x + 10, y : y + 10, 1] += noise  # type: ignore # FP
+        return (True, image)
 
     def release(self) -> None:
         pass
