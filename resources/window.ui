@@ -94,6 +94,17 @@
             <property name="orientation">vertical</property>
             <property name="row-homogeneous">True</property>
             <child>
+              <object class="GtkToggleButton" id="toggle_controls_button">
+                <property name="halign">end</property>
+                <property name="icon-name">gnome-control-center-symbolic</property>
+                <property name="valign">start</property>
+                <layout>
+                  <property name="column">2</property>
+                  <property name="row">0</property>
+                </layout>
+              </object>
+            </child>
+            <child>
               <object class="GtkBox">
                 <property name="css-classes">center-box</property>
                 <property name="halign">center</property>
@@ -180,17 +191,6 @@
                 </style>
                 <layout>
                   <property name="column">1</property>
-                  <property name="row">0</property>
-                </layout>
-              </object>
-            </child>
-            <child>
-              <object class="GtkButton" id="toggle_controls_button">
-                <property name="halign">end</property>
-                <property name="icon-name">gnome-control-center-symbolic</property>
-                <property name="valign">start</property>
-                <layout>
-                  <property name="column">2</property>
                   <property name="row">0</property>
                 </layout>
               </object>

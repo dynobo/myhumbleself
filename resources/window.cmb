@@ -26,13 +26,13 @@
 	(1,97,"GtkButton","right_button",91,None,None,None,2,None,None),
 	(1,98,"GtkButton","down_button",91,None,None,None,3,None,None),
 	(1,99,"GtkButton","up_button",91,None,None,None,4,None,None),
-	(1,100,"GtkButton","toggle_controls_button",91,None,None,None,5,None,None),
 	(1,101,"GtkMenuButton","camera_menu_button",81,None,"start",None,2,None,None),
 	(1,103,"GtkPopover",None,101,None,None,None,-1,None,None),
 	(1,104,"GtkFlowBox","shape_box",84,None,None,None,1,None,None),
 	(1,105,"GtkFlowBox","camera_box",103,None,None,None,None,None,None),
 	(1,106,"GtkToggleButton","debug_mode_button",81,None,"start",None,4,None,None),
-	(1,107,"GtkButton","about_button",81,None,"end",None,4,None,None)
+	(1,107,"GtkButton","about_button",81,None,"end",None,4,None,None),
+	(1,108,"GtkToggleButton","toggle_controls_button",91,None,None,None,-1,None,None)
   </object>
   <object_property>
 	(1,2,"GtkWindow","child",None,None,None,None,None,None,None,None,None,None),
@@ -82,9 +82,6 @@
 	(1,99,"GtkButton","icon-name","go-up-symbolic",None,None,None,None,None,None,None,None,None),
 	(1,99,"GtkWidget","halign","center",None,None,None,None,None,None,None,None,None),
 	(1,99,"GtkWidget","valign","start",None,None,None,None,None,None,None,None,None),
-	(1,100,"GtkButton","icon-name","gnome-control-center-symbolic",None,None,None,None,None,None,None,None,None),
-	(1,100,"GtkWidget","halign","end",None,None,None,None,None,None,None,None,None),
-	(1,100,"GtkWidget","valign","start",None,None,None,None,None,None,None,None,None),
 	(1,101,"GtkMenuButton","has-frame","False",None,None,None,None,None,None,None,None,None),
 	(1,101,"GtkMenuButton","icon-name","video-x-generic-symbolic",None,None,None,None,None,None,None,None,None),
 	(1,101,"GtkMenuButton","popover",None,None,None,None,None,103,None,None,None,None),
@@ -102,7 +99,10 @@
 	(1,106,"GtkWidget","visible","False",None,None,None,None,None,None,None,None,None),
 	(1,107,"GtkButton","has-frame","False",None,None,None,None,None,None,None,None,None),
 	(1,107,"GtkButton","icon-name","dialog-information-symbolic",None,None,None,None,None,None,None,None,None),
-	(1,107,"GtkWidget","tooltip-text","Show about window",None,None,None,None,None,None,None,None,None)
+	(1,107,"GtkWidget","tooltip-text","Show about window",None,None,None,None,None,None,None,None,None),
+	(1,108,"GtkButton","icon-name","gnome-control-center-symbolic",None,None,None,None,None,None,None,None,None),
+	(1,108,"GtkWidget","halign","end",None,None,None,None,None,None,None,None,None),
+	(1,108,"GtkWidget","valign","start",None,None,None,None,None,None,None,None,None)
   </object_property>
   <object_layout_property>
 	(1,89,90,"GtkOverlayLayoutChild","clip-overlay","True",None,None,None,None),
@@ -116,8 +116,7 @@
 	(1,91,98,"GtkGridLayoutChild","row","2",None,None,None,None),
 	(1,91,99,"GtkGridLayoutChild","column","1",None,None,None,None),
 	(1,91,99,"GtkGridLayoutChild","row","0",None,None,None,None),
-	(1,91,100,"GtkGridLayoutChild","column","2",None,None,None,None),
-	(1,91,100,"GtkGridLayoutChild","row","0",None,None,None,None)
+	(1,91,108,"GtkGridLayoutChild","column","2",None,None,None,None)
   </object_layout_property>
   <object_data>
 	(1,2,"GtkWidget",1,1,None,None,None,None,None,None),

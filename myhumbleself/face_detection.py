@@ -58,7 +58,7 @@ class FaceDetection:
 
     def _detect_faces_cnn(self, image: np.ndarray) -> list[Rect]:
         # Scale down to speed up and improve detection
-        # TODO: Make instance variable, expose via cli
+        # TODO: Make instance variable, expose via cli?
         target_width = 250  # based on little testing
         scale_factor = target_width / max(image.shape)
         image = cv2.resize(

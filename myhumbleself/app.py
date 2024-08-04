@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from statistics import mean
 
-# Hide warnings show during search for cameras
+# Hide warnings shown during search for cameras
 os.environ["OPENCV_LOG_LEVEL"] = "FATAL"
 
 import gi
@@ -21,6 +21,7 @@ from gi.repository import Gdk, GdkPixbuf, Gio, Gtk  # noqa: E402
 logger = logging.getLogger(__name__)
 
 # TODO: Handle invalid last_camera_id in config
+# TODO: Add license for icons
 
 
 def init_logger(log_level: str = "WARNING") -> None:
