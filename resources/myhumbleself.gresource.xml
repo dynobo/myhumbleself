@@ -16,6 +16,9 @@
     <file compressed="true" preprocess="xml-stripblanks">actions/follow-face-symbolic.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">actions/follow-face-off-symbolic.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">actions/shapes-symbolic.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">actions/reset-symbolic.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">actions/controls-hide-symbolic.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">actions/controls-show-symbolic.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">actions/01-circle-symbolic.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">actions/02-oval-symbolic.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">actions/03-square-symbolic.svg</file>
