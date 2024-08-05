@@ -204,7 +204,6 @@
     </style>
   </object>
   <object class="GtkCssProvider" id="css_provider"/>
-  <object class="GtkStringList" id="ShapeList"/>
   <object class="GtkAboutDialog" id="about_dialog">
     <property name="comments">Utility to display webcam image for presentations or screencasts on Linux.</property>
     <property name="destroy-with-parent">True</property>
