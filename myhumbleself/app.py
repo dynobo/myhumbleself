@@ -21,7 +21,6 @@ from gi.repository import Gdk, GdkPixbuf, Gio, Gtk  # noqa: E402
 logger = logging.getLogger(__name__)
 
 # TODO: Handle invalid last_camera_id in config
-# TODO: Add license for icons
 # TODO: Print system info to log and about dialog
 
 
@@ -71,9 +70,6 @@ class MyHumbleSelf(Gtk.Application):
         self.zoom_out_button: Gtk.Button
 
         # Init values
-        self._face_detection_method = video_handler.face_detection.Method[
-            args.face_detection.upper()
-        ]
         self.config = config.load()
         self.fps: list[float] = [0]
         self.fps_window = 50
@@ -82,7 +78,6 @@ class MyHumbleSelf(Gtk.Application):
         self.last_image_id = b""
         self.video_handler = video_handler.VideoHandler(
             cam_id=self.config["main"].getint("last_active_camera", 0),
-            face_detection_model=self._face_detection_method,
             shape_png_buffer=self._load_active_shape_png(),
             zoom_factor=self.config["main"].getfloat("zoom_factor", 1),
             offset_x=self.config["main"].getint("offset_x", 0),
@@ -436,15 +431,6 @@ def _parse_args() -> argparse.Namespace:
         Parsed arguments.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-f",
-        "--face-detection",
-        type=str,
-        choices=[m.name.lower() for m in video_handler.face_detection.Method],
-        help="Model to use for face detection. "
-        "The default 'cnn' is more accurate but requires more compute.",
-        default="cnn",
-    )
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Enable info logging."
     )

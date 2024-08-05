@@ -1,5 +1,4 @@
 import logging
-from enum import Enum, auto
 from pathlib import Path
 
 import cv2
@@ -10,29 +9,20 @@ from myhumbleself.structures import Rect
 logger = logging.getLogger(__name__)
 
 
-class Method(Enum):
-    CNN = auto()
-    HAARCASCADE = auto()
-
-
 class FaceDetection:
     cnn_onnx = str(
         Path(__file__).parent / "resources" / "face_detection_yunet_2023mar_int8.onnx"
     )
-    haarcascade_xml = f"{cv2.data.haarcascades}haarcascade_frontalface_default.xml"  # type: ignore # FP
 
-    def __init__(self, method: Method) -> None:
+    def __init__(self) -> None:
         self._history: list[Rect] = []
         self._max_history_len = 20
         self._last_smoothed_geometry: Rect | None = None
         self._detector_cnn = cv2.FaceDetectorYN.create(self.cnn_onnx, "", (42, 42))
-        self._detector_haarcascade = cv2.CascadeClassifier(self.haarcascade_xml)
 
         self.fluctuation_threshold_factor = 0.03
         self.follow_face_speed_factor = 0.2
-        self.selected_detector = method
         self.debug_mode = False
-        logger.info("Using detection method: %s", self.selected_detector)
 
     @staticmethod
     def _draw_bounding_box(
@@ -45,16 +35,6 @@ class FaceDetection:
             color=color,
             thickness=2,
         )
-
-    def _detect_faces_haarcascade(self, image: np.ndarray) -> list[Rect]:
-        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        face_detections = self._detector_haarcascade.detectMultiScale(
-            gray_image, scaleFactor=1.1, minNeighbors=5, minSize=(40, 40)
-        )
-        faces = [
-            Rect(left=f[0], top=f[1], width=f[2], height=f[3]) for f in face_detections
-        ]
-        return faces
 
     def _detect_faces_cnn(self, image: np.ndarray) -> list[Rect]:
         # Scale down to speed up and improve detection
@@ -84,13 +64,6 @@ class FaceDetection:
                 faces.append(Rect(left=left, top=top, width=width, height=height))
 
         return faces
-
-    def _detect_faces(self, image: np.ndarray) -> list[Rect]:
-        if self.selected_detector == Method.CNN:
-            return self._detect_faces_cnn(image)
-        if self.selected_detector == Method.HAARCASCADE:
-            return self._detect_faces_haarcascade(image)
-        raise ValueError(f"Unknown face detection method: {self.selected_detector}")
 
     @staticmethod
     def _select_largest_face(faces: list[Rect]) -> Rect | None:
@@ -137,10 +110,9 @@ class FaceDetection:
                 Rect(top=0, left=0, width=image.shape[1] - 1, height=image.shape[0] - 1)
             )
 
-        faces = self._detect_faces(image)
+        faces = self._detect_faces_cnn(image)
 
         if self.debug_mode:
-            # Draw BBox of all detected raw faces
             for f in faces:
                 self._draw_bounding_box(image, f, color=(0, 125, 0))
 

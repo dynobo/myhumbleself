@@ -48,7 +48,6 @@ class VideoHandler:
     def __init__(  # noqa:PLR0913
         self,
         cam_id: int,
-        face_detection_model: face_detection.Method,
         shape_png_buffer: bytes,
         zoom_factor: float,
         offset_x: int,
@@ -68,7 +67,7 @@ class VideoHandler:
 
         self._cam_id: int = cam_id
         self._camera = camera.Camera()
-        self._face_detection = face_detection.FaceDetection(method=face_detection_model)
+        self._face_detection = face_detection.FaceDetection()
 
         self.zoom_factor = zoom_factor
         self.offset_x = offset_x
