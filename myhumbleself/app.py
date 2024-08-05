@@ -1,6 +1,7 @@
 import argparse
 import logging
 import os
+import platform
 import time
 from pathlib import Path
 from statistics import mean
@@ -19,8 +20,6 @@ gi.require_version("GdkPixbuf", "2.0")
 from gi.repository import Gdk, GdkPixbuf, Gio, Gtk  # noqa: E402
 
 logger = logging.getLogger(__name__)
-
-# TODO: Print system info to log and about dialog
 
 
 def init_logger(log_level: str = "WARNING") -> None:
@@ -111,6 +110,7 @@ class MyHumbleSelf(Gtk.Application):
         self.about_dialog = self.builder.get_object("about_dialog")
         self.about_button = self.builder.get_object("about_button")
         self.about_dialog.set_logo_icon_name("myhumbleself")
+        self.about_dialog.set_system_information(self.get_system_info())
         self.about_button.connect("clicked", lambda _: self.about_dialog.present())
         self.debug_mode_button = self.builder.get_object("debug_mode_button")
         if self.loglevel_debug:
@@ -421,6 +421,50 @@ class MyHumbleSelf(Gtk.Application):
         self.fps.append(fps)
         if len(self.fps) > self.fps_window:
             self.fps.pop(0)
+
+    def get_system_info(self) -> str:
+        xdg_session_type = os.environ.get("XDG_SESSION_TYPE", "").lower()
+        has_wayland_display_env = bool(os.environ.get("WAYLAND_DISPLAY", ""))
+        is_wayland = "wayland" in xdg_session_type or has_wayland_display_env
+
+        linux_info = platform.freedesktop_os_release()
+
+        text = f"Distro: {linux_info.get('NAME', 'Unknown')} "
+        text += f"({linux_info.get('BUILD_ID', 'Unknown')})\n"
+        text += f"DE: {self.get_desktop_environment()}\n"
+        text += f"Wayland: {is_wayland}\n"
+        text += f"Flatpak: {os.getenv('FLATPAK_ID') is not None}\n"
+        text += f"Python: {platform.python_version()}\n"
+        text += f"GTK: {Gtk.get_major_version()}.{Gtk.get_minor_version()}\n"
+
+        logger.debug("System information:\n%s", text)
+        return text
+
+    def get_desktop_environment(self) -> str:  # noqa: PLR0911 # too many returns
+        """Detect used desktop environment (Linux)."""
+        kde_full_session = os.environ.get("KDE_FULL_SESSION", "").lower()
+        xdg_current_desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
+        desktop_session = os.environ.get("DESKTOP_SESSION", "").lower()
+        gnome_desktop_session_id = os.environ.get("GNOME_DESKTOP_SESSION_ID", "")
+        hyprland_instance_signature = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE", "")
+
+        if gnome_desktop_session_id == "this-is-deprecated":
+            gnome_desktop_session_id = ""
+
+        if gnome_desktop_session_id or "gnome" in xdg_current_desktop:
+            return "Gnome"
+        if kde_full_session or "kde-plasma" in desktop_session:
+            return "KDE"
+        if "sway" in xdg_current_desktop or "sway" in desktop_session:
+            return "Sway"
+        if "unity" in xdg_current_desktop:
+            return "Unity"
+        if hyprland_instance_signature:
+            return "Hyprland"
+        if "awesome" in xdg_current_desktop:
+            return "Awesome"
+
+        return "Unknown"
 
 
 def _parse_args() -> argparse.Namespace:
