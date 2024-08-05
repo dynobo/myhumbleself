@@ -10,7 +10,6 @@
   <object>
 	(1,2,"GtkApplicationWindow","main_window",None,None,None,None,-1,None,None),
 	(1,46,"GtkCssProvider","css_provider",None,None,None,None,-1,None,None),
-	(1,51,"GtkStringList","ShapeList",None,None,None,None,-1,None,None),
 	(1,81,"GtkHeaderBar","titlebar",2,None,"titlebar",None,None,None,None),
 	(1,82,"GtkToggleButton","follow_face_button",81,None,"start",None,None,None,None),
 	(1,83,"GtkMenuButton","shape_menu_button",81,None,"start",None,1,None,None),

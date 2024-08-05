@@ -23,11 +23,6 @@ logger = logging.getLogger(__name__)
 
 
 def init_logger(log_level: str = "WARNING") -> None:
-    """Initializes a logger with a specified log level.
-
-    Args:
-        log_level: The log level to set.
-    """
     log_format = "%(asctime)s - %(levelname)-7s - %(name)s:%(lineno)d - %(message)s"
     datefmt = "%H:%M:%S"
     logging.basicConfig(format=log_format, datefmt=datefmt, level=log_level)
@@ -100,6 +95,7 @@ class MyHumbleSelf(Gtk.Application):
 
         self.win = self.builder.get_object("main_window")
         self.win.set_application(self)
+        self.win.set_icon_name("com.github.dynobo.myhumbleself")
 
         picture = self.builder.get_object("picture")
         picture.add_tick_callback(self.on_picture_tick)
@@ -441,7 +437,7 @@ class MyHumbleSelf(Gtk.Application):
         return text
 
     def get_desktop_environment(self) -> str:  # noqa: PLR0911 # too many returns
-        """Detect used desktop environment (Linux)."""
+        """Detect used desktop environment."""
         kde_full_session = os.environ.get("KDE_FULL_SESSION", "").lower()
         xdg_current_desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
         desktop_session = os.environ.get("DESKTOP_SESSION", "").lower()
