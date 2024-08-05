@@ -20,7 +20,6 @@ from gi.repository import Gdk, GdkPixbuf, Gio, Gtk  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
-# TODO: Handle invalid last_camera_id in config
 # TODO: Print system info to log and about dialog
 
 

@@ -96,7 +96,7 @@ class VideoHandler:
 
     @property
     def _frame_size_hw(self) -> tuple[int, int]:
-        cam_image = self.available_cameras[self._cam_id]
+        cam_image = self.available_cameras[self._camera.cam_id]
         return (cam_image.shape[0], cam_image.shape[1])
 
     def can_zoom_out(self) -> bool:
