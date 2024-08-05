@@ -1,7 +1,7 @@
 import logging
+import time
 from pathlib import Path
 from threading import Thread
-from time import sleep
 from typing import Any
 
 import cv2
@@ -10,20 +10,23 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-class PlaceholderVideoCapture:
+class DemoVideoCapture:
     def __init__(self) -> None:
-        self._placeholder_image = cv2.imread(
-            str(Path(__file__).parent / "resources" / "placeholder.jpg")
-        )
+        self._demo_video_file = str(Path(__file__).parent / "resources" / "demo.mp4")
+        self.capture = cv2.VideoCapture(self._demo_video_file)
+        self.frames_count = int(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.fps = self.capture.get(cv2.CAP_PROP_FPS)
+        self.last_frame = time.perf_counter()
 
     def read(self) -> tuple[bool, np.ndarray]:
-        sleep(0.01)
-        image = self._placeholder_image.copy()
-        # Add noise to center to invalidate video handler cache:
-        x, y = int(image.shape[0] / 2), int(image.shape[1] / 2)
-        noise = np.random.randint(0, 3, (10, 10), np.uint8)
-        image[x : x + 10, y : y + 10, 1] += noise  # type: ignore # FP
-        return (True, image)
+        while self.last_frame + 1 / self.fps > time.perf_counter():
+            pass
+        self.last_frame = time.perf_counter()
+        return_code, frame = self.capture.read()
+        if not return_code:
+            self.capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            return_code, frame = self.capture.read()
+        return (return_code, frame)
 
     def release(self) -> None:
         pass
@@ -40,18 +43,16 @@ class Camera:
         self.FALLBACK_CAM_ID = 99
         self.available_cameras = self._get_available_cameras()
         self._cam_id: int
-        self._capture: cv2.VideoCapture | PlaceholderVideoCapture | None = None
+        self._capture: cv2.VideoCapture | DemoVideoCapture | None = None
         self.frame: np.ndarray = np.zeros((1080, 1920, 3), np.uint8)
         self.fps: list[float] = [0]
         self.fps_window = 100
         self.stop_video_thread = False
         self.video_thread: Thread | None = None
 
-    def _get_video_capture(
-        self, cam_id: int
-    ) -> cv2.VideoCapture | PlaceholderVideoCapture:
+    def _get_video_capture(self, cam_id: int) -> cv2.VideoCapture | DemoVideoCapture:
         if cam_id == self.FALLBACK_CAM_ID:
-            return PlaceholderVideoCapture()
+            return DemoVideoCapture()
 
         return cv2.VideoCapture(cam_id, cv2.CAP_V4L2)
 
@@ -106,8 +107,8 @@ class Camera:
             self._cam_id = 99
 
         if self._cam_id == self.FALLBACK_CAM_ID:
-            logger.info("Using placeholder camera.")
-            self._capture = PlaceholderVideoCapture()
+            logger.info("Using demo video camera.")
+            self._capture = DemoVideoCapture()
         else:
             self._capture = cv2.VideoCapture(self._cam_id, cv2.CAP_V4L2)
 
