@@ -79,6 +79,7 @@ class MyHumbleSelf(Gtk.Application):
         self.fps_window = 50
         self.cam_item_prefix = "/dev/video"
         self.loglevel_debug = logger.getEffectiveLevel() == logging.DEBUG
+        self.last_image_id = b""
         self.video_handler = video_handler.VideoHandler(
             cam_id=self.config["main"].getint("last_active_camera", 0),
             face_detection_model=self._face_detection_method,
@@ -388,27 +389,31 @@ class MyHumbleSelf(Gtk.Application):
         tick_before = time.perf_counter()
 
         image = self.video_handler.get_frame()
-        # TODO: Implement skip if frame didn't change?
 
-        self.left_button.set_sensitive(self.video_handler.can_move_left())
-        self.right_button.set_sensitive(self.video_handler.can_move_right())
-        self.up_button.set_sensitive(self.video_handler.can_move_up())
-        self.down_button.set_sensitive(self.video_handler.can_move_down())
-        self.zoom_out_button.set_sensitive(self.video_handler.can_zoom_out())
-        self.zoom_in_button.set_sensitive(self.video_handler.can_zoom_in())
+        # Compare an approx. image hash with the last one to avoid unnecessary updates:
+        new_image_id = image[::100, ::100, 1].data.tobytes()
+        if self.last_image_id != new_image_id:
+            self.last_image_id = new_image_id
 
-        height, width, channels = image.shape
-        pixbuf = GdkPixbuf.Pixbuf.new_from_data(
-            image.tobytes(),
-            GdkPixbuf.Colorspace.RGB,
-            True,
-            8,
-            width,
-            height,
-            width * channels,
-        )
-        texture = Gdk.Texture.new_for_pixbuf(pixbuf)
-        widget.set_paintable(texture)
+            self.left_button.set_sensitive(self.video_handler.can_move_left())
+            self.right_button.set_sensitive(self.video_handler.can_move_right())
+            self.up_button.set_sensitive(self.video_handler.can_move_up())
+            self.down_button.set_sensitive(self.video_handler.can_move_down())
+            self.zoom_out_button.set_sensitive(self.video_handler.can_zoom_out())
+            self.zoom_in_button.set_sensitive(self.video_handler.can_zoom_in())
+
+            height, width, channels = image.shape
+            pixbuf = GdkPixbuf.Pixbuf.new_from_data(
+                image.tobytes(),
+                GdkPixbuf.Colorspace.RGB,
+                True,
+                8,
+                width,
+                height,
+                width * channels,
+            )
+            texture = Gdk.Texture.new_for_pixbuf(pixbuf)
+            widget.set_paintable(texture)
 
         if logger.getEffectiveLevel() <= logging.INFO:
             self.win.set_title(
