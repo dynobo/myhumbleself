@@ -382,7 +382,7 @@ class MyHumbleSelf(Gtk.Application):
         """
         tick_before = time.perf_counter()
 
-        image = self.video_handler.get_frame()
+        image = self.video_handler.get_processed_frame()
 
         # Compare an approx. image hash with the last one to avoid unnecessary updates:
         new_image_id = image[::100, ::100, 1].data.tobytes()

@@ -177,7 +177,7 @@ class VideoHandler:
             2,
         )
 
-    def get_frame(self) -> np.ndarray:
+    def get_processed_frame(self) -> np.ndarray:
         frame = self._camera.get_frame()
         frame = self._process_frame(frame)
         return frame
