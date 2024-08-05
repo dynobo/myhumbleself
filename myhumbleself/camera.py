@@ -41,7 +41,7 @@ class Camera:
     def __init__(self) -> None:
         self.FALLBACK_CAM_ID = 99
         self.available_cameras = self._get_available_cameras()
-        self._cam_id: int
+        self.cam_id: int
         self._capture: cv2.VideoCapture | DemoVideoCapture | None = None
         self.frame: np.ndarray = np.zeros((1080, 1920, 3), np.uint8)
         self.fps: list[float] = [0]
@@ -86,6 +86,7 @@ class Camera:
             finally:
                 cap.release()
 
+        logger.info("Available cameras: %s", cams.keys())
         return cams
 
     def start(self, cam_id: int) -> None:
@@ -97,19 +98,19 @@ class Camera:
 
         if cam_is_available:
             logger.info("Using camera %s.", cam_id)
-            self._cam_id = cam_id
+            self.cam_id = cam_id
         elif not cam_is_available and first_cam_id is not None:
             logger.warning("Camera %s not available. Fallback to first one.", cam_id)
-            self._cam_id = first_cam_id
+            self.cam_id = first_cam_id
         else:
             logger.error("No camera accessible! Is another application using it?")
-            self._cam_id = 99
+            self.cam_id = 99
 
-        if self._cam_id == self.FALLBACK_CAM_ID:
+        if self.cam_id == self.FALLBACK_CAM_ID:
             logger.info("Using demo video camera.")
             self._capture = DemoVideoCapture()
         else:
-            self._capture = cv2.VideoCapture(self._cam_id, cv2.CAP_V4L2)
+            self._capture = cv2.VideoCapture(self.cam_id, cv2.CAP_V4L2)
 
         # Set compressed codec for way better performance:
         self._capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))  # type: ignore # FP
