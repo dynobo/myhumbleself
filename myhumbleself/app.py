@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 # TODO: Handle invalid last_camera_id in config
 # TODO: Add license for icons
+# TODO: Print system info to log and about dialog
 
 
 def init_logger(log_level: str = "WARNING") -> None:
@@ -112,6 +113,10 @@ class MyHumbleSelf(Gtk.Application):
         self.shape_box = self.init_shape_box()
         self.follow_face_button = self.init_follow_face_button()
         self.camera_box = self.init_camera_box()
+        self.about_dialog = self.builder.get_object("about_dialog")
+        self.about_button = self.builder.get_object("about_button")
+        self.about_dialog.set_logo_icon_name("myhumbleself")
+        self.about_button.connect("clicked", lambda _: self.about_dialog.present())
         self.debug_mode_button = self.builder.get_object("debug_mode_button")
         if self.loglevel_debug:
             self.debug_mode_button.set_visible(True)
