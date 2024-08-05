@@ -20,11 +20,10 @@ def cache(func: Callable) -> Callable:
     This decorator instead caches the processed frame and serves it, if the frame is
     still the same.
 
-    To estimate, if the frame is the same, only a center patch of the frame is
-    considered. The size of the patch is a trade-off between performance and accuracy.
-    We use a relatively small patch, as the camera usually has a fair bit of noise and
-    the center usually shows a part of the head. This makes it unlikely, that the two
-    subsequent frames have the same patch but are otherwise fairly different.
+    To estimate, if the frame is the same, only one channel of every 100th pixel of
+    the frame is taken into account. The number is a trade-off between performance and
+    accuracy. Still, due to subtle movements of camera & person, and due to camera
+    noise, the chance of a false positive seem low.
 
     Rough tests show a speedup of 2x (cache is hit ~once per frame), but it highly
     depends on camera FPS and system.
@@ -34,11 +33,9 @@ def cache(func: Callable) -> Callable:
     """
     cache.id = 0  # type: ignore [attr-defined]
     cache.content = None  # type: ignore [attr-defined]
-    patch_size = 10
 
     def inner(cls, ary: np.ndarray) -> np.ndarray:  # noqa: ANN001
-        x, y = ary.shape[0] // 2, ary.shape[1] // 2
-        new_cache_id = ary[x : x + patch_size, y : y + patch_size, 1].data.tobytes()  # type: ignore [attr-defined]
+        new_cache_id = ary[::100, ::100, 1].data.tobytes()  # type: ignore [attr-defined]
         if new_cache_id != cache.id:  # type: ignore [attr-defined]
             cache.id = new_cache_id  # type: ignore [attr-defined]
             cache.content = func(cls, ary)  # type: ignore [attr-defined]

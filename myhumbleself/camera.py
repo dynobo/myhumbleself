@@ -14,7 +14,6 @@ class DemoVideoCapture:
     def __init__(self) -> None:
         self._demo_video_file = str(Path(__file__).parent / "resources" / "demo.mp4")
         self.capture = cv2.VideoCapture(self._demo_video_file)
-        self.frames_count = int(self.capture.get(cv2.CAP_PROP_FRAME_COUNT))
         self.fps = self.capture.get(cv2.CAP_PROP_FPS)
         self.last_frame = time.perf_counter()
 
