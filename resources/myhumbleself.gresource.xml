@@ -27,6 +27,6 @@
     <file compressed="true" preprocess="xml-stripblanks">actions/06-splat-symbolic.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">actions/98-aspect-4-3-symbolic.svg</file>
     <file compressed="true" preprocess="xml-stripblanks">actions/99-aspect-16-9-symbolic.svg</file>
-    <file compressed="true" preprocess="xml-stripblanks">apps/myhumbleself.svg</file>
+    <file compressed="true" preprocess="xml-stripblanks">apps/com.github.dynobo.myhumbleself.svg</file>
   </gresource>
 </gresources>
