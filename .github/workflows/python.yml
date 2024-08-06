@@ -23,7 +23,6 @@ jobs:
              python3-gi \
              gobject-introspection \
              libgtk-4-dev \
-             graphviz `# required for pydeps` \
              libxml2-utils `# required for pre-commit hooks`
       - name: Install python deps
         run: pip install '.[dev]'
