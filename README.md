@@ -22,8 +22,8 @@
 **Quickstart:**
 
 - Start MyHumbleSelf
-- Resize the window and move it to desired location
-- Set to "always on top" with window manager (e.g. right click on titlebar)
+- Resize the window and move it to the desired location
+- Set to "always on top" via your window manager (right click on titlebar)
 - Hover the webcam image and click the "eye"-button in top right to hide window controls
 
 **Some notable features:**
