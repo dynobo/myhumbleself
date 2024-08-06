@@ -9,7 +9,7 @@
 <a href='https://coveralls.io/github/dynobo/myhumbleself'><img src='https://coveralls.io/repos/github/dynobo/myhumbleself/badge.svg' alt='Coverage Status' /></a>
 </p>
 
-![MyHumbleSelf Screenshot](TBD)
+![MyHumbleSelf Screenshot - UI](https://github.com/dynobo/myhumbleself/raw/main/resources/screencast.webm.mov)
 
 ## Installation
 
@@ -38,7 +38,18 @@
 
 ## Usage
 
-TBD
+**Quickstart:**
+
+- Start MyHumbleSelf (e.g. run `myhumbleself`)
+- Resize the window and move it to desired location
+- Set to stay on top through window manager (usually right click on titlebar)
+- Hover the webcam image and adjust zoom and position
+- Click the "eye"-button on top right to hide window controls
+
+**Some notable features:**
+
+- Use face tracking to keep your head in center
+- Choose among various shape-masks to add some style
 
 ## CLI Options
 
