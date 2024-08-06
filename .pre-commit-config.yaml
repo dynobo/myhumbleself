@@ -48,15 +48,17 @@ repos:
         language: system
         entry: pytest
         pass_filenames: false
+      # To execute manual stage:
+      # pre-commit run --hook-stage manual
       - id: pydeps
         name: pydeps
-        stages: [commit]
+        stages: [manual]
         language: system
         entry: pydeps myhumbleself --max-bacon=2 -o=pydeps.png -T=png --no-show
         pass_filenames: false
       - id: code2flow
         name: code2flow
-        stages: [commit]
+        stages: [manual]
         language: system
         entry: code2flow myhumbleself --no-trimming --exclude-function=(global) --output=code2flow.png
         pass_filenames: false
