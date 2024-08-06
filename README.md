@@ -9,7 +9,27 @@
 <a href='https://coveralls.io/github/dynobo/myhumbleself'><img src='https://coveralls.io/repos/github/dynobo/myhumbleself/badge.svg' alt='Coverage Status' /></a>
 </p>
 
-![MyHumbleSelf Screenshot - UI](https://github.com/dynobo/myhumbleself/raw/main/resources/screencast.webm.mov)
+[MyHumbleSelf in Action](https://raw.githubusercontent.com/dynobo/myhumbleself/main/resources/screenshot-02.png)
+
+[MyHumbleSelf UI](https://raw.githubusercontent.com/dynobo/myhumbleself/main/resources/screenshot-01.png)
+
+## Usage
+
+✨
+**[View screencast](https://raw.githubusercontent.com/dynobo/myhumbleself/main/resources/screencast.webm)**
+✨
+
+**Quickstart:**
+
+- Start MyHumbleSelf
+- Resize the window and move it to desired location
+- Set to "always on top" with window manager (e.g. right click on titlebar)
+- Hover the webcam image and click the "eye"-button in top right to hide window controls
+
+**Some notable features:**
+
+- Use face tracking to keep your head in center
+- Choose among various shape-masks to add some style
 
 ## Installation
 
@@ -36,24 +56,16 @@
 - `pipx install myhumbleself` (recommended, requires [pipx](https://pipx.pypa.io/))
 - _or_ `pip install myhumbleself`
 
-## Usage
-
-**Quickstart:**
-
-- Start MyHumbleSelf (e.g. run `myhumbleself`)
-- Resize the window and move it to desired location
-- Set to stay on top through window manager (usually right click on titlebar)
-- Hover the webcam image and adjust zoom and position
-- Click the "eye"-button on top right to hide window controls
-
-**Some notable features:**
-
-- Use face tracking to keep your head in center
-- Choose among various shape-masks to add some style
-
 ## CLI Options
 
-TBD
+```
+usage: myhumbleself [-h] [-v] [-vv]
+
+options:
+  -h, --help           show this help message and exit
+  -v, --verbose        Enable info logging.
+  -vv, --very-verbose  Enable debug logging.
+```
 
 ## Contribute
 
@@ -103,4 +115,4 @@ pre-commit install
 
 ## Certification
 
-![WOMM](https://raw.githubusercontent.com/dynobo/myhumbleself/main/badge.png)
+![WOMM](https://raw.githubusercontent.com/dynobo/myhumbleself/main/resources/badge.png)
