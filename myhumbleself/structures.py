@@ -3,6 +3,11 @@ from dataclasses import dataclass
 
 @dataclass
 class Rect:
+    """Data structure to represent and transform rectangles.
+
+    Note: Using OpenCV style geometry ordering (y, x, height, width)
+    """
+
     top: int
     left: int
     width: int
@@ -29,11 +34,11 @@ class Rect:
 
     @property
     def area(self) -> int:
-        return self.width * self.height
+        return abs(self.width * self.height)
 
     @property
     def geometry(self) -> tuple[int, int, int, int]:
-        return (self.left, self.top, self.width, self.height)
+        return (self.top, self.left, self.height, self.width)
 
     def pad(self, padding: int) -> None:
         """Centered padding of the rectangle.
@@ -49,6 +54,9 @@ class Rect:
     def scale(self, factor: float) -> None:
         """Centered scaling of the rectangle.
 
+        Note: Using int() instead of more accurate round(), because we care less about
+          single pixel accuracy than about speed.
+
         Args:
             factor: Multiplication factor.
         """
@@ -60,26 +68,26 @@ class Rect:
         self.height = new_height
 
     def copy(self) -> "Rect":
-        return Rect(top=self.top, left=self.left, width=self.width, height=self.height)
+        return Rect(top=self.top, left=self.left, height=self.height, width=self.width)
 
-    def move_by(self, x: int, y: int) -> None:
+    def move_by(self, y: int, x: int) -> None:
         """Move the rectangle by the provided x and y values.
 
         Args:
-            x: Value to move the rectangle by on the x-axis.
             y: Value to move the rectangle by on the y-axis.
+            x: Value to move the rectangle by on the x-axis.
         """
-        self.top += y
         self.left += x
+        self.top += y
 
-    def stay_within(self, width: int, height: int) -> None:
+    def stay_within(self, height: int, width: int) -> None:
         """Ensure the rectangle is within the bounds of the provided width and height.
 
         Preserves aspect ratio.
 
         Args:
-            width: Width of the bounding box.
             height: Height of the bounding box.
+            width: Width of the bounding box.
         """
         # Scale self to fit within width and height
         scale_factor = min(width / self.width, height / self.height)

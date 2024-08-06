@@ -78,7 +78,7 @@ class FaceDetection:
     def _smooth_geometry(self) -> Rect:
         mean = np.mean([f.geometry for f in self._history], axis=0, dtype=int).tolist()
         smoothed_geometry = Rect(
-            left=mean[0], top=mean[1], width=mean[2], height=mean[3]
+            top=mean[0], left=mean[1], height=mean[2], width=mean[3]
         )
 
         if not self._last_smoothed_geometry:
