@@ -11,7 +11,7 @@ os.environ["OPENCV_LOG_LEVEL"] = "FATAL"
 
 import gi
 
-from myhumbleself import config, converters, video_handler
+from myhumbleself import __version__, config, converters, video_handler
 
 gi.require_version("Gdk", "4.0")
 gi.require_version("Gtk", "4.0")
@@ -106,6 +106,7 @@ class MyHumbleSelf(Gtk.Application):
         self.about_dialog = self.builder.get_object("about_dialog")
         self.about_button = self.builder.get_object("about_button")
         self.about_dialog.set_logo_icon_name("com.github.dynobo.myhumbleself")
+        self.about_dialog.set_version(__version__)
         self.about_dialog.set_system_information(self.get_system_info())
         self.about_button.connect("clicked", lambda _: self.about_dialog.present())
         self.debug_mode_button = self.builder.get_object("debug_mode_button")
