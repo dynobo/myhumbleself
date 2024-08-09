@@ -1,47 +1,57 @@
 # MyHumbleSelf
 
-**Show your webcam image on your desktop for presentations or screencasts. (Linux only 🐧)**
+**Show your webcam image on your desktop during presentations or screencasts. (Linux
+only 🐧)**
 
 <p align="center"><br>
 <img alt="Tests passing" src="https://github.com/dynobo/myhumbleself/workflows/Test/badge.svg">
-<a href="https://github.com/dynobo/myhumbleself/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
+<a href="https://github.com/dynobo/myhumbleself/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-GPL3-blue.svg"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/Code%20style-black-%23000000"></a>
 <a href='https://coveralls.io/github/dynobo/myhumbleself'><img src='https://coveralls.io/repos/github/dynobo/myhumbleself/badge.svg' alt='Coverage Status' /></a>
 </p>
 
-[MyHumbleSelf in Action](https://raw.githubusercontent.com/dynobo/myhumbleself/main/resources/screenshot-02.png)
+[MyHumbleSelf Screenshot](https://raw.githubusercontent.com/dynobo/myhumbleself/main/resources/screenshot-00.png)
 
-[MyHumbleSelf UI](https://raw.githubusercontent.com/dynobo/myhumbleself/main/resources/screenshot-01.png)
+## Installation
+
+- **[Flatpak from Flathub](https://flathub.org/apps/com.github.dynobo.myhumbleself)
+  (_recommended_)** \
+  _or_
+- [Python Package from PyPi](https://pypi.org/project/myhumbleself/) and its
+  [prerequisites](#prerequisites)!
 
 ## Usage
 
 ✨
-**[View screencast](https://raw.githubusercontent.com/dynobo/myhumbleself/main/resources/screencast.webm)**
+**[Watch the screencast](https://raw.githubusercontent.com/dynobo/myhumbleself/main/resources/screencast.webm)**
 ✨
 
-**Quickstart:**
+**Quick start:**
 
-- Start MyHumbleSelf
+- Launch MyHumbleSelf
 - Resize the window and move it to the desired location
-- Set to "always on top" via your window manager (right click on titlebar)
-- Hover the webcam image and click the "eye"-button in top right to hide window controls
+- Set it to "always on top" via your window manager (right-click on titlebar)
+- Hover the webcam image and click the "eye"-button on top right to hide the window
+  controls
 
 **Some notable features:**
 
-- Use face tracking to keep your head in center
-- Choose among various shape-masks to add some style
+- Use face tracking to keep your head in the center
+- Choose from a variety of shape-masks to add some style
 
-## Installation
+## Contributing
 
-### As Flatpak
+You are very welcome to contribute to this project! However, before you invest a lot of
+time in a contribution, it might be worth
+[sharing your idea in advance](https://github.com/dynobo/myhumbleself/issues) to avoid
+an unnecessary disappointment.
 
-### As Python package
+### Development Setup
 
-**Prerequisites:**
+**Prerequisites:** <a name="prerequisites"></a>
 
 - Python 3.12+
 - GTK 4.6+ and related dev packages:
-
   ```sh
   sudo apt-get install \
      libgirepository1.0-dev \
@@ -51,68 +61,49 @@
      libgtk-4-dev
   ```
 
-**Python package**
+**Setup your version of the repository:**
 
-- `pipx install myhumbleself` (recommended, requires [pipx](https://pipx.pypa.io/))
-- _or_ `pip install myhumbleself`
-
-## CLI Options
-
-```
-usage: myhumbleself [-h] [-v] [-vv]
-
-options:
-  -h, --help           show this help message and exit
-  -v, --verbose        Enable info logging.
-  -vv, --very-verbose  Enable debug logging.
-```
-
-## Contribute
-
-TBD
-
-## Development Setup
-
-**Prerequisites:**
-
-- Python 3.12+
-- `git`
-- GTK 4.6+ and related dev packages:
-
-  ```sh
-  sudo apt-get install \
-     libgirepository1.0-dev \
-     libcairo2-dev \
-     python3-gi \
-     gobject-introspection \
-     libgtk-4-dev
-  ```
-
-**Fork and clone**
-
-1. [Fork](https://github.com/dynobo/myhumbleself/fork) the repository.
-2. Clone to local system:
+1. [Fork the project's repository](https://github.com/dynobo/myhumbleself/fork).
+2. Copy your fork to the local file system: \
    `git clone https://github.com/<YOUR-USERNAME>/myhumbleself.git`
 
 **Setup Virtual Environment:**
 
-In root of repository, run:
+1. Navigate into the repository root directory: \
+   `cd myhumbleself`
+2. Create the virtual environment: \
+   `python -m venv .venv`
+3. Activate the environement: \ `source .venv/bin/activate`
 
-```sh
-python -m venv .venv &&
-source .venv/bin/activate &&
-pip install -e '.[dev]' &&
-pre-commit install
-```
+**Install dependencies:**
+
+1. Install the package, it's dependencies, and development dependencies in editable
+   mode: \
+   `pip install -e '.[dev]'`
+2. Verify installation by launching MyHumbleSelf: \
+   `python myhumbleself/app.py`
+
+**Run checks and tests:**
+
+1. Run all project checks locally, to verify a correct setup of the dev environment: \
+   `pre-commit run --all-files`
+2. You should run those checks before doing any `git commit` to ensure your change
+   doesn't break anything. You can do this automatically by installing them as git hook:
+   \
+   `pre-commit install`
 
 ## Design Principles
 
 - **No network connection**<br>Everything should run locally without any network
   communication.
-- **Simplicity**<br>Focus on main features. Keep UI simple. If possible, avoid text in
-  the UI.
-- **Dependencies**<br>The fewer dependencies, the better.
+- **Simplicity**<br>Focus on key features. Keep the UI simple. Avoid text in the UI if
+  possible.
+- **Dependencies**<br>The less dependencies, the better.
 
 ## Certification
 
 ![WOMM](https://raw.githubusercontent.com/dynobo/myhumbleself/main/resources/badge.png)
+
+```
+
+```
