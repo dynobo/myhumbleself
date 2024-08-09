@@ -3,3 +3,8 @@ File 'face_detection_yunet_2023mar_int8.onnx':
 - Source: https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet
 - License: MIT,
   https://github.com/opencv/opencv_zoo/blob/main/models/face_detection_yunet/LICENSE
+
+File 'demo.mp4':
+
+- Source: https://www.pexels.com/video/a-man-smiling-at-the-camera-6968214/
+- Licence: Pexels, https://www.pexels.com/license/
