@@ -28,6 +28,8 @@ jobs:
         run: pip install '.[dev]'
       - name: Run tests
         run: pre-commit run --all-files
+      - name: Run GUI tests
+        run: pytest -m gui
 
   publish:
     name: Build & Publish
