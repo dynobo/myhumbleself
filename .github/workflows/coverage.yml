@@ -27,6 +27,6 @@ jobs:
       - name: Install python deps
         run: pip install '.[dev]'
       - name: Run tests
-        run: pytest
+        run: pytest -m "gui or not gui"
       - name: Coveralls
         uses: coverallsapp/github-action@v2
