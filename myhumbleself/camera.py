@@ -37,21 +37,53 @@ class DemoVideoCapture:
         return 0
 
 
+class FallbackVideoCapture:
+    def __init__(self) -> None:
+        self._image_path = str(Path(__file__).parent / "resources" / "fallback.png")
+        self.frame = cv2.imread(self._image_path)
+
+    def read(self) -> tuple[bool, np.ndarray]:
+        # Add some noise to invalidate cache
+        return (
+            True,
+            self.frame - np.random.randint(0, 3, size=self.frame.shape, dtype=np.uint8),
+        )
+
+    def release(self) -> None:
+        pass
+
+    def isOpened(self) -> bool:  # noqa: N802 # camelCase used by OpenCV
+        return True
+
+    def set(self, _: Any, __: Any) -> int:  # noqa: ANN401
+        return 0
+
+
 class Camera:
     def __init__(self) -> None:
+        self.DEMO_CAM_ID = 98
         self.FALLBACK_CAM_ID = 99
         self.available_cameras = self._get_available_cameras()
         self.cam_id: int
-        self._capture: cv2.VideoCapture | DemoVideoCapture | None = None
+        self._capture: (
+            cv2.VideoCapture | DemoVideoCapture | FallbackVideoCapture | None
+        ) = None
         self.frame: np.ndarray = np.zeros((1080, 1920, 3), np.uint8)
         self.fps: list[float] = [0]
         self.fps_window = 100
         self.stop_video_thread = False
         self.video_thread: Thread | None = None
 
-    def _get_video_capture(self, cam_id: int) -> cv2.VideoCapture | DemoVideoCapture:
-        if cam_id == self.FALLBACK_CAM_ID:
+    def _get_video_capture(
+        self, cam_id: int
+    ) -> cv2.VideoCapture | DemoVideoCapture | FallbackVideoCapture:
+        if cam_id == self.DEMO_CAM_ID:
+            logger.info("Using demo video capture.")
             return DemoVideoCapture()
+
+        if cam_id == self.FALLBACK_CAM_ID:
+            logger.info("Using fallback video capture.")
+            return FallbackVideoCapture()
 
         return cv2.VideoCapture(cam_id, cv2.CAP_V4L2)
 
@@ -67,7 +99,7 @@ class Camera:
             IDs of available cameras
         """
         cams = {}
-        cam_ids_to_try = [*range(10), self.FALLBACK_CAM_ID]
+        cam_ids_to_try = [*range(10), self.DEMO_CAM_ID, self.FALLBACK_CAM_ID]
 
         for idx in cam_ids_to_try:
             cap = self._get_video_capture(idx)
@@ -106,11 +138,7 @@ class Camera:
             logger.error("No camera accessible! Is another application using it?")
             self.cam_id = 99
 
-        if self.cam_id == self.FALLBACK_CAM_ID:
-            logger.info("Using demo video camera.")
-            self._capture = DemoVideoCapture()
-        else:
-            self._capture = cv2.VideoCapture(self.cam_id, cv2.CAP_V4L2)
+        self._capture = self._get_video_capture(cam_id=self.cam_id)
 
         # Set compressed codec for way better performance:
         self._capture.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))  # type: ignore # FP

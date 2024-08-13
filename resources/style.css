@@ -30,14 +30,17 @@ window.transparent.background {
 
 .overlay button {
   border-radius: 16px;
-  filter: invert(1) contrast(150%);
-  opacity: 0.5;
-  transition: opacity 0.3s;
-  border: 0px;
-}
-
-.overlay button:hover {
+  background-color: rgba(0, 0, 0, 0.5);
   opacity: 0.9;
+  background-image: none;
+  transition: opacity 0.3s;
+  border: 1px solid white;
+}
+.overlay button image {
+  color: white;
+}
+.overlay button:hover {
+  background-color: rgba(0, 0, 0, 0.9);
 }
 
 .overlay .center-box button {
@@ -46,10 +49,10 @@ window.transparent.background {
 
 .overlay .center-box button:first-child {
   border-radius: 16px 0px 0px 16px;
-  margin-right: 1px;
+  margin-right: -1px;
 }
 
 .overlay .center-box button:last-child {
   border-radius: 0px 16px 16px 0px;
-  margin-left: 1px;
+  margin-left: -1px;
 }

@@ -65,7 +65,6 @@ class VideoHandler:
         # detection, if we are already at the edge of the image, to disable buttons
         self._focus_area: structures.Rect | None = None
 
-        self._cam_id: int = cam_id
         self._camera = camera.Camera()
         self._face_detection = face_detection.FaceDetection()
 
@@ -81,6 +80,7 @@ class VideoHandler:
 
         self.available_cameras = self._camera.available_cameras
         self.FALLBACK_CAM_ID = self._camera.FALLBACK_CAM_ID
+        self.DEMO_CAM_ID = self._camera.DEMO_CAM_ID
 
         self._camera.start(cam_id)
 
