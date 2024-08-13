@@ -193,7 +193,10 @@ class MyHumbleSelf(Gtk.Application):
             if cam_id == self.config["main"].getint("last_active_camera", 0):
                 button.set_active(True)
 
-            if cam_id == self.video_handler.FALLBACK_CAM_ID:
+            if cam_id in [
+                self.video_handler.FALLBACK_CAM_ID,
+                self.video_handler.DEMO_CAM_ID,
+            ]:
                 button.set_visible(self.loglevel_debug)
 
             # Set button group
