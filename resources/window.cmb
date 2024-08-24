@@ -31,8 +31,7 @@
 	(1,105,"GtkFlowBox","camera_box",103,None,None,None,None,None,None),
 	(1,106,"GtkToggleButton","debug_mode_button",81,None,"start",None,4,None,None),
 	(1,107,"GtkButton","about_button",81,None,"end",None,4,None,None),
-	(1,108,"GtkToggleButton","toggle_controls_button",91,None,None,None,-1,None,None),
-	(1,109,"GtkAboutDialog","about_dialog",None,None,None,None,-1,None,None)
+	(1,108,"GtkToggleButton","toggle_controls_button",91,None,None,None,-1,None,None)
   </object>
   <object_property>
 	(1,2,"GtkWindow","child",None,None,None,None,None,None,None,None,None,None),
@@ -102,18 +101,7 @@
 	(1,107,"GtkWidget","tooltip-text","Show about window",None,None,None,None,None,None,None,None,None),
 	(1,108,"GtkButton","icon-name","gnome-control-center-symbolic",None,None,None,None,None,None,None,None,None),
 	(1,108,"GtkWidget","halign","end",None,None,None,None,None,None,None,None,None),
-	(1,108,"GtkWidget","valign","start",None,None,None,None,None,None,None,None,None),
-	(1,109,"GtkAboutDialog","comments","Utility to display webcam image for presentations or screencasts on Linux.",None,None,None,None,None,None,None,None,None),
-	(1,109,"GtkAboutDialog","license-type","gpl-3-0",None,None,None,None,None,None,None,None,None),
-	(1,109,"GtkAboutDialog","program-name","MyHumbleSelf",None,None,None,None,None,None,None,None,None),
-	(1,109,"GtkAboutDialog","system-information","TBD",None,None,None,None,None,None,None,None,None),
-	(1,109,"GtkAboutDialog","version","v0.1.0",None,None,None,None,None,None,None,None,None),
-	(1,109,"GtkAboutDialog","website","https://github.com/dynobo/myhumbleself",None,None,None,None,None,None,None,None,None),
-	(1,109,"GtkAboutDialog","website-label","Github",None,None,None,None,None,None,None,None,None),
-	(1,109,"GtkAboutDialog","wrap-license","True",None,None,None,None,None,None,None,None,None),
-	(1,109,"GtkWindow","destroy-with-parent","True",None,None,None,None,None,None,None,None,None),
-	(1,109,"GtkWindow","modal","True",None,None,None,None,None,None,None,None,None),
-	(1,109,"GtkWindow","transient-for","2",None,None,None,None,None,None,None,None,None)
+	(1,108,"GtkWidget","valign","start",None,None,None,None,None,None,None,None,None)
   </object_property>
   <object_layout_property>
 	(1,89,90,"GtkOverlayLayoutChild","clip-overlay","True",None,None,None,None),

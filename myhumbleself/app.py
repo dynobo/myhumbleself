@@ -103,12 +103,8 @@ class MyHumbleSelf(Gtk.Application):
         self.shape_box = self.init_shape_box()
         self.follow_face_button = self.init_follow_face_button()
         self.camera_box = self.init_camera_box()
-        self.about_dialog = self.builder.get_object("about_dialog")
         self.about_button = self.builder.get_object("about_button")
-        self.about_dialog.set_logo_icon_name("com.github.dynobo.myhumbleself")
-        self.about_dialog.set_version(__version__)
-        self.about_dialog.set_system_information(self.get_system_info())
-        self.about_button.connect("clicked", lambda _: self.about_dialog.present())
+        self.about_button.connect("clicked", lambda _: self.show_about_dialog())
         self.debug_mode_button = self.builder.get_object("debug_mode_button")
         if self.loglevel_debug:
             self.debug_mode_button.set_visible(True)
@@ -146,6 +142,22 @@ class MyHumbleSelf(Gtk.Application):
         self.init_css()
 
         self.win.present()
+
+    def show_about_dialog(self) -> None:
+        self.about = Gtk.AboutDialog()
+        self.about.set_transient_for(self.win)
+        self.about.set_modal(True)
+        self.about.set_program_name("MyHumbleSelf")
+        self.about.set_logo_icon_name("com.github.dynobo.myhumbleself")
+        self.about.set_license_type(Gtk.License.GPL_3_0)
+        self.about.set_comments(
+            "Utility to display webcam image for presentations or screencasts on Linux."
+        )
+        self.about.set_website("https://github.com/dynobo/myhumbleself")
+        self.about.set_website_label("Github")
+        self.about.set_version(__version__)
+        self.about.set_system_information(self.get_system_info())
+        self.about.set_visible(True)
 
     def create_camera_menu_button(self, cam_id: int) -> Gtk.ToggleButton:
         """Create a custom button for camera menu, with image and label underneath.
