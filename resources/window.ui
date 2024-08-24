@@ -204,17 +204,4 @@
     </style>
   </object>
   <object class="GtkCssProvider" id="css_provider"/>
-  <object class="GtkAboutDialog" id="about_dialog">
-    <property name="comments">Utility to display webcam image for presentations or screencasts on Linux.</property>
-    <property name="destroy-with-parent">True</property>
-    <property name="license-type">gpl-3-0</property>
-    <property name="modal">True</property>
-    <property name="program-name">MyHumbleSelf</property>
-    <property name="system-information">TBD</property>
-    <property name="transient-for">main_window</property>
-    <property name="version">v0.1.0</property>
-    <property name="website">https://github.com/dynobo/myhumbleself</property>
-    <property name="website-label">Github</property>
-    <property name="wrap-license">True</property>
-  </object>
 </interface>
