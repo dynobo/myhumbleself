@@ -15,7 +15,7 @@ only 🐧)**
 ## Installation
 
 - **[Flatpak from Flathub](https://flathub.org/apps/com.github.dynobo.myhumbleself)
-  (_recommended_)** \
+  (_coming soon_)** \
   _or_
 - [Python Package from PyPi](https://pypi.org/project/myhumbleself/) and its
   [prerequisites](#prerequisites)!
@@ -38,6 +38,21 @@ only 🐧)**
 
 - Use face tracking to keep your head in the center
 - Choose from a variety of shape-masks to add some style
+
+## Frequently Asked Questions
+
+**1) How can I display my webcam stream in MyHumbleSelf _and_ in a video conferencing
+tool at the same time?**
+
+You can use [v4l2loopback](https://github.com/umlaeute/v4l2loopback) to create a virtual
+webcam that you can access by multiple applications at the same time.
+
+**2) What should I do if I need more features?**
+
+If you think it is an important basic feature, open a
+[feature request](https://github.com/dynobo/myhumbleself/issues/new). Otherwise,
+consider using a tool like [OBS Studio](https://obsproject.com/), which is much more
+powerful (but a bit more difficult to use).
 
 ## Contributing
 
@@ -103,7 +118,3 @@ an unnecessary disappointment.
 ## Certification
 
 ![WOMM](https://raw.githubusercontent.com/dynobo/myhumbleself/main/resources/badge.png)
-
-```
-
-```
