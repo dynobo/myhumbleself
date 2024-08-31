@@ -7,7 +7,7 @@ myhumbleself = ["resources/*"]
 
 [project]
 name = "MyHumbleSelf"
-version = "0.1.0"
+version = "0.0.1"
 description = "Show your webcam image on the desktop for presentations."
 keywords = ["webcam", "camera", "utility", "tool", "presentation", "screencast"]
 readme = "README.md"
@@ -36,6 +36,7 @@ optional-dependencies = { dev = [
   "ruff==0.5.5",
   "pydeps==1.12.20",
   "code2flow==2.5.1",
+  "tbump==6.11.0",
 ] }
 
 [project.urls]
@@ -142,7 +143,7 @@ end_of_line = "keep"
 [tool.tbump]
 
 [tool.tbump.version]
-current = "0.5.0"
+current = "0.0.1"
 regex = '''
   (?P<major>\d+)
   \.
