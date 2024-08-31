@@ -66,7 +66,7 @@ def test_about_button(mhs_app):
     do_actions(
         [
             lambda: mhs_app.about_button.emit("clicked"),
-            lambda: get_value(mhs_app.about_dialog.get_visible, "is_visible", result),
+            lambda: get_value(mhs_app.about.get_visible, "is_visible", result),
         ]
     )
     assert result["is_visible"]
