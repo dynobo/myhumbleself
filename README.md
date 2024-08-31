@@ -10,7 +10,7 @@ only 🐧)**
 <a href='https://coveralls.io/github/dynobo/myhumbleself'><img src='https://coveralls.io/repos/github/dynobo/myhumbleself/badge.svg' alt='Coverage Status' /></a>
 </p>
 
-[MyHumbleSelf Screenshot](https://raw.githubusercontent.com/dynobo/myhumbleself/main/resources/screenshot-00.png)
+![MyHumbleSelf Screenshot](https://raw.githubusercontent.com/dynobo/myhumbleself/main/resources/screenshot-00.png)
 
 ## Installation
 
