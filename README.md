@@ -14,9 +14,6 @@ only 🐧)**
 
 ## Installation
 
-- **[Flatpak from Flathub](https://flathub.org/apps/com.github.dynobo.myhumbleself)
-  (_coming soon_)** \
-  _or_
 - [Python Package from PyPi](https://pypi.org/project/myhumbleself/) and its
   [prerequisites](#prerequisites)!
 
