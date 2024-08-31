@@ -7,7 +7,7 @@ myhumbleself = ["resources/*"]
 
 [project]
 name = "MyHumbleSelf"
-version = "0.0.1"
+version = "0.1.0"
 description = "Show your webcam image on the desktop for presentations."
 keywords = ["webcam", "camera", "utility", "tool", "presentation", "screencast"]
 readme = "README.md"
@@ -143,7 +143,7 @@ end_of_line = "keep"
 [tool.tbump]
 
 [tool.tbump.version]
-current = "0.0.1"
+current = "0.1.0"
 regex = '''
   (?P<major>\d+)
   \.
